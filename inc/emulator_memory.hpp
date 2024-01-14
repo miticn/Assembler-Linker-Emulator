@@ -10,5 +10,5 @@ public:
     uint32_t get32BitValueAtAddress(uint32_t address);
     void set8BitValueAtAddress(uint32_t address, uint8_t value);
     void set32BitValueAtAddress(uint32_t address, uint32_t value);
-    EmulatorMemory(){}
+    EmulatorMemory();
 };

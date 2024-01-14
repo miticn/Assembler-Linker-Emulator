@@ -6,7 +6,7 @@ assembler:
 	g++ -o src/assembler src/assembler.cpp
 
 emulator:
-	g++ -o src/emulator src/emulator.cpp
+	g++ -o src/emulator src/emulator.cpp src/emulator_memory.cpp
 
 linker:
 	g++ -o src/linker src/linker.cpp

@@ -1,4 +1,5 @@
 #include "../inc/emulator_memory.hpp"
+#include <iostream>
 
 uint8_t EmulatorMemory::get8BitValueAtAddress(uint32_t address){
     if (memory.find(address) == memory.end())
@@ -19,5 +20,5 @@ void EmulatorMemory::set32BitValueAtAddress(uint32_t address, uint32_t value){
 }
 
 EmulatorMemory::EmulatorMemory(){
-
+    // std::cout << "max_size = " << memory.max_size() << std::endl;
 }
