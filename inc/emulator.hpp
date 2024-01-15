@@ -28,13 +28,14 @@ public:
 
     friend ostream& operator<<(std::ostream &os, Emulator &emulator);
     static string formatToHex(uint32_t value);
+    void run();
+    void loadHex();
 };
 
 int main(){
     Emulator myEmulator;
-    while(!myEmulator.isHalted()){
-        myEmulator.executeInstuction(0);
-    }
+    myEmulator.loadHex();
+    myEmulator.run();
     std::cout << myEmulator << std::endl;
     return 0;
 }

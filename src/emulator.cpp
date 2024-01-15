@@ -24,7 +24,49 @@ void Emulator::setGeneralRegister(uint8_t registerId, uint32_t value){
 void Emulator::executeInstuction(uint32_t instruction){
     if(instruction == 0){
         halted = true;
+        return;
     }
+    uint16_t disp = instruction & 0xfff;
+    uint8_t regC = (instruction >> 12) & 0xf;
+    uint8_t regB = (instruction >> 16) & 0xf;
+    uint8_t regA = (instruction >> 20) & 0xf;
+    uint8_t mod = (instruction >> 24) & 0xf;
+    uint8_t oc = (instruction >> 28) & 0xf;
+
+    switch (oc)
+    {
+    case 0b0001:
+        /* software interupt */
+        break;
+    case 0b0010:
+        /* function call */
+        break;
+    case 0b0011:
+        /* jump */
+        break;
+    case 0b0100:
+        /* atomic register swap */
+        break;
+    case 0b0101:
+        /* arithmetic operation */
+        break;
+    case 0b0110:
+        /* logic operation */
+        break;
+    case 0b0111:
+        /* shift operation */
+        break;
+    case 0b1000:
+        /* store */
+        break;
+    case 0b1001:
+        /* load */
+        break;
+    
+    default:
+        break;
+    }
+
 }
 
 string Emulator::formatToHex(uint32_t value) {
@@ -42,3 +84,16 @@ ostream& operator<<(ostream &os, Emulator &emulator){
     };
     return os;
 }
+
+ void Emulator::run(){
+    while(!this->isHalted()){
+        uint32_t tmp = pc;
+        pc +=4;
+        this->executeInstuction(this->memory.get32BitValueAtAddress(tmp));
+    }
+ }
+
+
+ void Emulator::loadHex(){
+
+ }
