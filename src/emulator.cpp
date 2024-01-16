@@ -96,7 +96,7 @@ ostream& operator<<(ostream &os, Emulator &emulator){
  }
 
 
- void Emulator::loadHex(){
+ void Emulator::loadHex(string inputFileName){
 
  }
 
@@ -121,6 +121,40 @@ void Emulator::executeFunctionCall(uint8_t mod, uint8_t regA, uint8_t regB, uint
 
 }
 void Emulator::executeJump(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
+    switch (mod) {
+    case 0b0000:
+        pc = r[regA] + disp;
+        break;
+    case 0b0001:
+        if (r[regB] == r[regC])
+            pc = r[regA] + disp;
+        break;
+    case 0b0010:
+        if (r[regB] != r[regC])
+            pc = r[regA] + disp;
+        break;
+    case 0b0011:
+        if (static_cast<int32_t>(r[regB]) > static_cast<int32_t>(r[regC]))
+            pc = r[regA] + disp;
+        break;
+    case 0b1000:
+        pc = memory.get32BitValueAtAddress(r[regA] + disp);
+        break;
+    case 0b1001:
+        if (r[regB] == r[regC])
+            pc = memory.get32BitValueAtAddress(r[regA] + disp);
+        break;
+    case 0b1010:
+        if (r[regB] != r[regC])
+            pc = memory.get32BitValueAtAddress(r[regA] + disp);
+        break;
+    case 0b1011:
+        if (static_cast<int32_t>(r[regB]) > static_cast<int32_t>(r[regC]))
+            pc = memory.get32BitValueAtAddress(r[regA] + disp);
+        break;
+    default:
+        break;
+    }
 
 }
 void Emulator::executeAtomicRegisterSwap(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
@@ -180,8 +214,7 @@ void Emulator::executeShiftOperation(uint8_t mod, uint8_t regA, uint8_t regB, ui
     }
 }
 void Emulator::executeStore(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
-    switch (mod)
-    {
+    switch (mod){
     case 0b0000:
         this->memory.set32BitValueAtAddress(r[regA]+r[regB]+disp,r[regC]);
         break;
@@ -197,5 +230,34 @@ void Emulator::executeStore(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t reg
     }
 }
 void Emulator::executeLoad(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
-
+    switch (mod) {
+    case 0b0000:
+        r[regA] = csr[regB];
+        break;
+    case 0b0001:
+        r[regA] = r[regB] + disp;
+        break;
+    case 0b0010:
+        r[regA] = memory.get32BitValueAtAddress(r[regB] + r[regC] + disp);
+        break;
+    case 0b0011:
+        r[regA] = memory.get32BitValueAtAddress(r[regB]);
+        r[regB] += disp;
+        break;
+    case 0b0100:
+        csr[regA] = r[regB];
+        break;
+    case 0b0101:
+        csr[regA] = csr[regB] | disp;
+        break;
+    case 0b0110:
+        csr[regA] = memory.get32BitValueAtAddress(r[regB] + r[regC] + disp);
+        break;
+    case 0b0111:
+        csr[regA] = memory.get32BitValueAtAddress(r[regB]);
+        r[regB] += disp;
+        break;
+    default:
+        break;
+    }
 }
