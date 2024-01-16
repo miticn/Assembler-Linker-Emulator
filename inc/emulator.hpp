@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <iostream>
 #include <iomanip>
+#include <termios.h>
 #include "emulator_memory.hpp"
 
 using namespace std;

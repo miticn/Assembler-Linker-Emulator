@@ -1,5 +1,7 @@
 #include <cstdint>
 #include <unordered_map>
+#include <fstream>
+#include <sstream>
 
 class EmulatorMemory{
 private:

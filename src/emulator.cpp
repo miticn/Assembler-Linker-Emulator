@@ -97,7 +97,29 @@ ostream& operator<<(ostream &os, Emulator &emulator){
 
 
  void Emulator::loadHex(string inputFileName){
+    std::ifstream hexFile(inputFileName);
 
+    if (!hexFile.is_open()) {
+        std::cerr << "Error opening the hex file." << std::endl;
+        return;
+    }
+
+    std::string line;
+    while (std::getline(hexFile, line)) {
+        std::stringstream ss(line);
+
+        uint32_t address;
+        char colon;
+        ss >> std::hex >> address >> colon;
+
+        uint8_t value;
+        while (ss >> std::hex >> value) {
+            memory.set8BitValueAtAddress(address, value);
+            address++;
+        }
+    }
+
+    hexFile.close();
  }
 
 uint32_t Emulator::pop(){
