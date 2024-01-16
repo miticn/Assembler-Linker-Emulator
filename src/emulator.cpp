@@ -12,11 +12,11 @@ Emulator::Emulator(){
 }
 
 
-uint32_t Emulator::getGeneralRegister(uint8_t registerId){
+uint32_t Emulator::getGR(uint8_t registerId){
     if (registerId==0) return 0;
     return r[registerId];
 }
-void Emulator::setGeneralRegister(uint8_t registerId, uint32_t value){
+void Emulator::setGR(uint8_t registerId, uint32_t value){
     if (registerId==0) return;
     r[registerId] = value;
 }
@@ -82,7 +82,7 @@ ostream& operator<<(ostream &os, Emulator &emulator){
     for(int i = 0; i<Emulator::NUMBER_OF_GENERAL_REGISTERS; i++){
         if (i%4==0) os << "\n";
         else os << "\t";
-        os<<"r"<<i<<"="<<Emulator::formatToHex(emulator.getGeneralRegister(i));
+        os<<"r"<<i<<"="<<Emulator::formatToHex(emulator.getGR(i));
     };
     return os;
 }
@@ -134,45 +134,45 @@ void Emulator::push(uint32_t value){
 void Emulator::executeFunctionCall(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
     if(0b0000==mod){
         push(pc);
-        pc = r[regA]+r[regB] + disp;
+        pc = getGR(regA)+getGR(regB) + disp;
     }
     else if(0b0001==mod){
         push(pc);
-        pc = this->memory.get32BitValueAtAddress(r[regA]+r[regB] + disp);
+        pc = this->memory.get32BitValueAtAddress(getGR(regA)+getGR(regB) + disp);
     }
 
 }
 void Emulator::executeJump(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
     switch (mod) {
     case 0b0000:
-        pc = r[regA] + disp;
+        pc = getGR(regA) + disp;
         break;
     case 0b0001:
-        if (r[regB] == r[regC])
-            pc = r[regA] + disp;
+        if (getGR(regB) == getGR(regC))
+            pc = getGR(regA) + disp;
         break;
     case 0b0010:
-        if (r[regB] != r[regC])
-            pc = r[regA] + disp;
+        if (getGR(regB) != getGR(regC))
+            pc = getGR(regA) + disp;
         break;
     case 0b0011:
-        if (static_cast<int32_t>(r[regB]) > static_cast<int32_t>(r[regC]))
-            pc = r[regA] + disp;
+        if (static_cast<int32_t>(getGR(regB)) > static_cast<int32_t>(getGR(regC)))
+            pc = getGR(regA) + disp;
         break;
     case 0b1000:
-        pc = memory.get32BitValueAtAddress(r[regA] + disp);
+        pc = memory.get32BitValueAtAddress(getGR(regA) + disp);
         break;
     case 0b1001:
-        if (r[regB] == r[regC])
-            pc = memory.get32BitValueAtAddress(r[regA] + disp);
+        if (getGR(regB) == getGR(regC))
+            pc = memory.get32BitValueAtAddress(getGR(regA) + disp);
         break;
     case 0b1010:
-        if (r[regB] != r[regC])
-            pc = memory.get32BitValueAtAddress(r[regA] + disp);
+        if (getGR(regB) != getGR(regC))
+            pc = memory.get32BitValueAtAddress(getGR(regA) + disp);
         break;
     case 0b1011:
-        if (static_cast<int32_t>(r[regB]) > static_cast<int32_t>(r[regC]))
-            pc = memory.get32BitValueAtAddress(r[regA] + disp);
+        if (static_cast<int32_t>(getGR(regB)) > static_cast<int32_t>(getGR(regC)))
+            pc = memory.get32BitValueAtAddress(getGR(regA) + disp);
         break;
     default:
         break;
@@ -180,24 +180,24 @@ void Emulator::executeJump(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC
 
 }
 void Emulator::executeAtomicRegisterSwap(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
-    uint32_t temp = r[regB];
-    r[regB] = r[regC];
-    r[regC] = temp;
+    uint32_t temp = getGR(regB);
+    setGR(regB, getGR(regC));
+    setGR(regC, temp);
 }
 void Emulator::executeArithmeticOperation(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
     switch (mod)
     {
     case 0b0000:
-        r[regA] = r[regB] + r[regC];
+        setGR(regA, getGR(regB) + getGR(regC));
         break;
     case 0b0001:
-        r[regA] = r[regB] - r[regC];
+        setGR(regA, getGR(regB) - getGR(regC));
         break;
     case 0b0010:
-        r[regA] = r[regB] * r[regC];
+        setGR(regA, getGR(regB) * getGR(regC));
         break;
     case 0b0011:
-        r[regA] = r[regB] / r[regC];
+        setGR(regA, getGR(regB) / getGR(regC));
         break;
     default:
         break;
@@ -207,16 +207,16 @@ void Emulator::executeLogicOperation(uint8_t mod, uint8_t regA, uint8_t regB, ui
     switch (mod)
     {
     case 0b0000:
-        r[regA] = ~r[regB];
+        setGR(regA, ~getGR(regB));
         break;
     case 0b0001:
-        r[regA] = r[regB] & r[regC];
+        setGR(regA, getGR(regB) & getGR(regC));
         break;
     case 0b0010:
-        r[regA] = r[regB] | r[regC];
+        setGR(regA, getGR(regB) | getGR(regC));
         break;
     case 0b0011:
-        r[regA] = r[regB] ^ r[regC];
+        setGR(regA, getGR(regB) ^ getGR(regC));
         break;
     default:
         break;
@@ -226,10 +226,10 @@ void Emulator::executeShiftOperation(uint8_t mod, uint8_t regA, uint8_t regB, ui
     switch (mod)
     {
     case 0b0000:
-        r[regA] = r[regB] << r[regC];
+        setGR(regA, getGR(regB) << getGR(regC));
         break;
     case 0b0001:
-        r[regA] = r[regB] >> r[regC];
+        setGR(regA, getGR(regB) >> getGR(regC));
         break;
     default:
         break;
@@ -238,14 +238,14 @@ void Emulator::executeShiftOperation(uint8_t mod, uint8_t regA, uint8_t regB, ui
 void Emulator::executeStore(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
     switch (mod){
     case 0b0000:
-        this->memory.set32BitValueAtAddress(r[regA]+r[regB]+disp,r[regC]);
+        this->memory.set32BitValueAtAddress(getGR(regA)+getGR(regB)+disp,getGR(regC));
         break;
     case 0b0010:
-        this->memory.set32BitValueAtAddress(memory.get32BitValueAtAddress(r[regA]+r[regB]+disp),r[regC]);
+        this->memory.set32BitValueAtAddress(memory.get32BitValueAtAddress(getGR(regA)+getGR(regB)+disp),getGR(regC));
         break;
     case 0b0001:
-        r[regA] = r[regA]+disp;
-        this->memory.set32BitValueAtAddress(r[regA], r[regC]);
+        setGR(regA, getGR(regA)+disp);
+        this->memory.set32BitValueAtAddress(getGR(regA), getGR(regC));
         break;
     default:
         break;
@@ -254,30 +254,30 @@ void Emulator::executeStore(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t reg
 void Emulator::executeLoad(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
     switch (mod) {
     case 0b0000:
-        r[regA] = csr[regB];
+        setGR(regA, csr[regB]);
         break;
     case 0b0001:
-        r[regA] = r[regB] + disp;
+        setGR(regA, getGR(regB) + disp);
         break;
     case 0b0010:
-        r[regA] = memory.get32BitValueAtAddress(r[regB] + r[regC] + disp);
+        setGR(regA, memory.get32BitValueAtAddress(getGR(regB) + getGR(regC) + disp));
         break;
     case 0b0011:
-        r[regA] = memory.get32BitValueAtAddress(r[regB]);
-        r[regB] += disp;
+        setGR(regA, memory.get32BitValueAtAddress(getGR(regB)));
+        setGR(regB, getGR(regB) + disp);
         break;
     case 0b0100:
-        csr[regA] = r[regB];
+        csr[regA] = getGR(regB);
         break;
     case 0b0101:
         csr[regA] = csr[regB] | disp;
         break;
     case 0b0110:
-        csr[regA] = memory.get32BitValueAtAddress(r[regB] + r[regC] + disp);
+        csr[regA] = memory.get32BitValueAtAddress(getGR(regB) + getGR(regC) + disp);
         break;
     case 0b0111:
-        csr[regA] = memory.get32BitValueAtAddress(r[regB]);
-        r[regB] += disp;
+        csr[regA] = memory.get32BitValueAtAddress(getGR(regB));
+        setGR(regB, getGR(regB) + disp);
         break;
     default:
         break;

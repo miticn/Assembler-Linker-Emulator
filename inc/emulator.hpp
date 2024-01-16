@@ -35,8 +35,8 @@ private:
 
 public:
     bool isHalted() const { return halted;}
-    uint32_t getGeneralRegister(uint8_t registerId);
-    void setGeneralRegister(uint8_t registerId, uint32_t value);
+    uint32_t getGR(uint8_t registerId);
+    void setGR(uint8_t registerId, uint32_t value);
     void executeInstuction(uint32_t instruction);
     Emulator();
 
