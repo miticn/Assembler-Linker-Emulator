@@ -26,6 +26,13 @@ void Emulator::executeInstuction(uint32_t instruction){
         halted = true;
         return;
     }
+    if(instruction == 0x10000000){/* software interupt */
+        push(status);
+        push(pc);
+        cause = 4;
+        status = status&(~0x1);
+        pc = handler;
+    }
     uint16_t disp = instruction & 0xfff;
     uint8_t regC = (instruction >> 12) & 0xf;
     uint8_t regB = (instruction >> 16) & 0xf;
@@ -33,36 +40,31 @@ void Emulator::executeInstuction(uint32_t instruction){
     uint8_t mod = (instruction >> 24) & 0xf;
     uint8_t oc = (instruction >> 28) & 0xf;
 
-    switch (oc)
-    {
-    case 0b0001:
-        /* software interupt */
-        break;
+    switch (oc) {
     case 0b0010:
-        /* function call */
+        executeFunctionCall(mod, regA, regB, regC, disp);
         break;
     case 0b0011:
-        /* jump */
+        executeJump(mod, regA, regB, regC, disp);
         break;
     case 0b0100:
-        /* atomic register swap */
+        executeAtomicRegisterSwap(mod, regA, regB, regC, disp);
         break;
     case 0b0101:
-        /* arithmetic operation */
+        executeArithmeticOperation(mod, regA, regB, regC, disp);
         break;
     case 0b0110:
-        /* logic operation */
+        executeLogicOperation(mod, regA, regB, regC, disp);
         break;
     case 0b0111:
-        /* shift operation */
+        executeShiftOperation(mod, regA, regB, regC, disp);
         break;
     case 0b1000:
-        /* store */
+        executeStore(mod, regA, regB, regC, disp);
         break;
     case 0b1001:
-        /* load */
+        executeLoad(mod, regA, regB, regC, disp);
         break;
-    
     default:
         break;
     }
@@ -97,3 +99,103 @@ ostream& operator<<(ostream &os, Emulator &emulator){
  void Emulator::loadHex(){
 
  }
+
+uint32_t Emulator::pop(){
+    uint32_t returnValue = memory.get32BitValueAtAddress(sp);
+    sp = sp + 4;
+    return returnValue;
+}
+void Emulator::push(uint32_t value){
+    sp = sp - 4;
+    memory.set32BitValueAtAddress(sp,value);
+}
+void Emulator::executeFunctionCall(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
+    if(0b0000==mod){
+        push(pc);
+        pc = r[regA]+r[regB] + disp;
+    }
+    else if(0b0001==mod){
+        push(pc);
+        pc = this->memory.get32BitValueAtAddress(r[regA]+r[regB] + disp);
+    }
+
+}
+void Emulator::executeJump(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
+
+}
+void Emulator::executeAtomicRegisterSwap(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
+    uint32_t temp = r[regB];
+    r[regB] = r[regC];
+    r[regC] = temp;
+}
+void Emulator::executeArithmeticOperation(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
+    switch (mod)
+    {
+    case 0b0000:
+        r[regA] = r[regB] + r[regC];
+        break;
+    case 0b0001:
+        r[regA] = r[regB] - r[regC];
+        break;
+    case 0b0010:
+        r[regA] = r[regB] * r[regC];
+        break;
+    case 0b0011:
+        r[regA] = r[regB] / r[regC];
+        break;
+    default:
+        break;
+    }
+}
+void Emulator::executeLogicOperation(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
+    switch (mod)
+    {
+    case 0b0000:
+        r[regA] = ~r[regB];
+        break;
+    case 0b0001:
+        r[regA] = r[regB] & r[regC];
+        break;
+    case 0b0010:
+        r[regA] = r[regB] | r[regC];
+        break;
+    case 0b0011:
+        r[regA] = r[regB] ^ r[regC];
+        break;
+    default:
+        break;
+    }
+}
+void Emulator::executeShiftOperation(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
+    switch (mod)
+    {
+    case 0b0000:
+        r[regA] = r[regB] << r[regC];
+        break;
+    case 0b0001:
+        r[regA] = r[regB] >> r[regC];
+        break;
+    default:
+        break;
+    }
+}
+void Emulator::executeStore(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
+    switch (mod)
+    {
+    case 0b0000:
+        this->memory.set32BitValueAtAddress(r[regA]+r[regB]+disp,r[regC]);
+        break;
+    case 0b0010:
+        this->memory.set32BitValueAtAddress(memory.get32BitValueAtAddress(r[regA]+r[regB]+disp),r[regC]);
+        break;
+    case 0b0001:
+        r[regA] = r[regA]+disp;
+        this->memory.set32BitValueAtAddress(r[regA], r[regC]);
+        break;
+    default:
+        break;
+    }
+}
+void Emulator::executeLoad(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp){
+
+}
