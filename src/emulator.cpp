@@ -88,10 +88,66 @@ ostream& operator<<(ostream &os, Emulator &emulator){
 }
 
  void Emulator::run(){
+    uint32_t current_time_config = 0xff;
+    auto duration_ms = chrono::milliseconds(0);
+    auto start_time = chrono::steady_clock::now();
+    bool last_timer_interupt_disabled = true;
     while(!this->isHalted()){
         uint32_t tmp = pc;
         pc +=4;
         this->executeInstuction(this->memory.get32BitValueAtAddress(tmp));
+        //Timer stuff
+        if(this->timerInteruptEnabled()){
+            if(current_time_config!=memory.get32BitValueAtAddress(tim_cfg_address) || last_timer_interupt_disabled){
+                current_time_config = memory.get32BitValueAtAddress(tim_cfg_address);
+                last_timer_interupt_disabled = false;
+                switch (current_time_config){
+                case 0x0:
+                    duration_ms = chrono::milliseconds(500);
+                    break;
+                case 0x1:
+                    duration_ms = chrono::milliseconds(1000);
+                    break;
+                case 0x2:
+                    duration_ms = chrono::milliseconds(1500);
+                    break;
+                case 0x3:
+                    duration_ms = chrono::milliseconds(2000);
+                    break;
+                case 0x4:
+                    duration_ms = chrono::milliseconds(5000);
+                    break;
+                case 0x5:
+                    duration_ms = chrono::milliseconds(10000);
+                    break;
+                case 0x6:
+                    duration_ms = chrono::milliseconds(30000);
+                    break;
+                case 0x7:
+                    duration_ms = chrono::milliseconds(60000);
+                    break;
+                default:
+                    break;
+                }
+                start_time = chrono::steady_clock::now();
+            }
+            if(chrono::steady_clock::now() > start_time + duration_ms) {
+                //timer interupt here
+                push(status);
+                push(pc);
+                cause = 2;
+                //status = status&(~0x1);
+                pc = handler;
+                start_time = chrono::steady_clock::now();
+            }
+        } else {
+            last_timer_interupt_disabled = true;
+        }
+        //Terminal stuff
+        if(this->terminalInteruptEnabled()){
+
+        }
+
     }
  }
 
