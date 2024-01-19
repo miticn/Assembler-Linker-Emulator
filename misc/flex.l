@@ -1,55 +1,9 @@
 %{
     //C code
-    enum yytokentyp {
-        COMMENT,
-        DOLLAR,
-        NUMBER,
-        EOL,
-        NUMBER_SIGN,
-        COLON,
-        DOT,
-        COMMA,
-        PLUS,
-        LBRACKET,
-        RBRACKET,
-        GLOBAL=10,
-        EXTERN,
-        SECTION,
-        WORD,
-        SKIP,
-        ASCII,
-        EQU,
-        END,
-        HALT=50,
-        INT,
-        IRET,
-        CALL,
-        RET,
-        JMP,
-        BEQ,
-        BNE,
-        BGT,
-        PUSH,
-        POP,
-        XCHG,
-        ADD,
-        SUB,
-        MUL,
-        DIV,
-        NOT,
-        AND,
-        OR,
-        XOR,
-        SHL,
-        SHR,
-        LD,
-        ST,
-        CSRRD,
-        CSRWR,
-        IDENTIFIER = 100,
-
-    };
+    #include "bison.tab.h"
 %}
+
+%option noyywrap
 
 COMMENT   "#".*\n
 NUMBER ([0-9])+
@@ -108,18 +62,19 @@ WHITESPACE [ \t]
 {IDENTIFIER} {return IDENTIFIER;}
 %%
 
-void error(){
-    printf("Error");
+int yyerror(const char* msg)
+{
+    fprintf(stderr, "lexer error: %s\n", msg);
+    return 0;
 }
 
-yywrap(){}
-
-main(int argc, char **argv)
+int main(int argc, char** argv)
 {
-  int tok;
-
-  while(tok = yylex()) {
-    printf("%d", tok);
-    printf("\n");
-  }
+    yyin = fopen(argv[1], "r");
+    int token;
+    while(token = yylex())
+    {
+        printf("%d\n", token);
+    }
+    return 0;
 }

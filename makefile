@@ -11,13 +11,12 @@ emulator:
 linker:
 	g++ -o src/linker src/linker.cpp
 
-flex:
+flex: bison
 	flex -o misc/flex.yy.c misc/flex.l
 	gcc -o misc/flex misc/flex.yy.c
 
 bison:
-	bison -d misc/bison.y
-	gcc -o misc/bison misc/bison.tab.c
+	bison -d misc/bison.y -o misc/bison.tab.c
 
 clean:
 	rm -f misc/flex.yy.c misc/flex
