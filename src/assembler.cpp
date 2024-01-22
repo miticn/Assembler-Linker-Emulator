@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../inc/assembler.hpp"
 
-void assemble(char *inputFileName, char *outputFileName) {
+void Assembler::assemble(char *inputFileName, char *outputFileName) {
     printf("Assembling %s into %s...\n", inputFileName, outputFileName);
+    
+
 }
 
 int main(int argc, char *argv[]) {
@@ -26,7 +29,8 @@ int main(int argc, char *argv[]) {
 
     char *inputFileName = argv[argc - 1];
 
-    assemble(inputFileName, outputFileName);
+    Assembler assembler;
+    assembler.assemble(inputFileName, outputFileName);
 
     return 0;
 }

@@ -9,6 +9,8 @@ COMMENT   "#".*\n
 NUMBER ([0-9])+
 IDENTIFIER [A-Za-z_][A-Za-z0-9_]*
 WHITESPACE [ \t]
+STRING   \".*\"
+REGISTER %r(1[0-5]|[0-9])
 
 %%
 {NUMBER} {return NUMBER;}
@@ -17,6 +19,7 @@ WHITESPACE [ \t]
 {WHITESPACE}  {}
 "#" {return NUMBER_SIGN;}
 "$" {return DOLLAR;}
+"%" {return PERCENT;}
 ":" {return COLON;}
 "." {return DOT;}
 "," {return COMMA;}
@@ -57,6 +60,9 @@ WHITESPACE [ \t]
 "st" {return ST;}
 "csrrd" {return CSRRD;}
 "csrwr" {return CSRWR;}
+{STRING} {return STRING;}
+{REGISTER} {return REGISTER;}
+"" {return CONTROL_REGISTER;}
 
 
 {IDENTIFIER} {return IDENTIFIER;}

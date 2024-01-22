@@ -1,5 +1,6 @@
 #include "symbol_table.hpp"
 #include "instruction.hpp"
+#include "../misc/bison.tab.h"
 
 class Assembler{
 private:
@@ -10,8 +11,10 @@ private:
 
     void appendUint32(uint32_t uint);
 
-
 public:
+
+    void assemble(char *inputFileName, char *outputFileName);
+
     void directiveGlobal();
     void directiveExtern();
     void directiveSection();
