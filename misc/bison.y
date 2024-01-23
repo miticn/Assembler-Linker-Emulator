@@ -131,10 +131,13 @@ literal : NUMBER;
 
 command : HALT { Assembler::tokenList.push_back(new HaltCommandToken);}
     | INT { Assembler::tokenList.push_back(new IntCommandToken);}
-    | IRET
+    | IRET { 
+        Assembler::tokenList.push_back(new RetCommandToken);
+        Assembler::tokenList.push_back(new PopStatusCommandToken);
+    }
     | RET { Assembler::tokenList.push_back(new RetCommandToken);}
-    | PUSH REGISTER
-    | POP REGISTER
+    | PUSH REGISTER { Assembler::tokenList.push_back(new PushCommandToken($2));}
+    | POP REGISTER { Assembler::tokenList.push_back(new PopCommandToken($2));}
     | XCHG REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new XchgCommandToken($2, $4));}
     | ADD REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new AddCommandToken($2, $4));}
     | SUB REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new SubCommandToken($2, $4));}

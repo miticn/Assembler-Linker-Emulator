@@ -77,36 +77,25 @@ struct IntCommandToken : public CommandToken{
     string getName() override {
         return "int";
     }
-    uint32_t getInstruction() override {
-        return 0x10000000;
-    }
-};
-
-struct IretCommandToken : public CommandToken{
-
-    string getName() override {
-        return "iret";
-    }
-    uint32_t getInstruction() override {
-
+    IntCommandToken(){
+        this->oc = 0b0001;
     }
 };
 
 struct RetCommandToken : public CommandToken{
-    
     string getName() override {
         return "ret";
     }
     RetCommandToken(){
         this->disp = (int16_t)4;
         this->regB = 14;
+        this->regA = 15;
         this->mod = 0b0011;
         this->oc = 0b1001;
     }
 };
 
 struct XchgCommandToken : public CommandToken{
-    
     string getName() override {
         return "xchg";
     }
@@ -119,7 +108,6 @@ struct XchgCommandToken : public CommandToken{
 };
 
 struct AddCommandToken : public CommandToken{
-    
     string getName() override {
         return "add";
     }
@@ -133,7 +121,6 @@ struct AddCommandToken : public CommandToken{
 };
 
 struct SubCommandToken : public CommandToken{
-    
     string getName() override {
         return "sub";
     }
@@ -147,7 +134,6 @@ struct SubCommandToken : public CommandToken{
 };
 
 struct MulCommandToken : public CommandToken{
-    
     string getName() override {
         return "mul";
     }
@@ -161,7 +147,6 @@ struct MulCommandToken : public CommandToken{
 };
 
 struct DivCommandToken : public CommandToken{
-    
     string getName() override {
         return "mul";
     }
@@ -176,7 +161,6 @@ struct DivCommandToken : public CommandToken{
 
 
 struct NotCommandToken : public CommandToken{
-    
     string getName() override {
         return "not";
     }
@@ -202,7 +186,6 @@ struct AndCommandToken : public CommandToken{
 };
 
 struct OrCommandToken : public CommandToken{
-    
     string getName() override {
         return "or";
     }
@@ -217,7 +200,6 @@ struct OrCommandToken : public CommandToken{
 
 
 struct XorCommandToken : public CommandToken{
-    
     string getName() override {
         return "xor";
     }
@@ -278,5 +260,45 @@ struct CsrwrCommandToken : public CommandToken{
         this->regB = reg1;
         this->mod = 0b0100;
         this->oc = 0b1001;
+    }
+};
+
+
+struct PushCommandToken : public CommandToken{
+    string getName() override {
+        return "push";
+    }
+    PushCommandToken(uint8_t reg1){
+        this->oc = 0b1000;
+        this->mod = 0b0001;
+        this->regC = reg1;
+        this->disp = (int16_t)-4;
+        this->regA = 14;
+    }
+};
+
+struct PopCommandToken : public CommandToken{
+    string getName() override {
+        return "pop";
+    }
+    PopCommandToken(uint8_t reg1){
+        this->oc = 0b1001;
+        this->mod = 0b0011;
+        this->regA = reg1;
+        this->disp = (int16_t)4;
+        this->regB = 14;
+    }
+};
+
+struct PopStatusCommandToken : public CommandToken{
+    string getName() override {
+        return "pop_status";
+    }
+    PopStatusCommandToken(){
+        this->oc = 0b1001;
+        this->mod = 0b0111;
+        this->regA = 0;
+        this->disp = (int16_t)4;
+        this->regB = 14;
     }
 };
