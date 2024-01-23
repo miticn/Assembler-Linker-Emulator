@@ -2,20 +2,23 @@
     #include <stdio.h>
     #include <iostream>
     #include <string>
+    #include <cstdint>
     using namespace std;
     #include "../inc/token.hpp"
     #include "../inc/assembler.hpp"
+    #include "../inc/operand.hpp"
 	extern int yylex(void);
     extern int yyparse();
     extern FILE *yyin;
 	extern void yyerror(const char*);
+
 %}
 
 %output "misc/bison.cpp"
 %defines "misc/bison.hpp"
 
 %union {
-    int intValue;
+    uint intValue;
     char* stringValue;
     // ... other types ...
 }
@@ -24,7 +27,7 @@
 /* declare tokens */
 %token DOLLAR
 %token PERCENT
-%token NUMBER
+%token <intValue> NUMBER
 %token EOL
 %token NUMBER_SIGN
 %token COLON
@@ -154,6 +157,7 @@ command : HALT { Assembler::tokenList.push_back(new HaltCommandToken);}
     
     | LD operand_data COMMA REGISTER
     | ST REGISTER COMMA operand_data
+
     | CALL operand_jump
     | JMP operand_jump
     | BEQ REGISTER COMMA REGISTER COMMA operand_jump
@@ -169,8 +173,10 @@ operand_data : DOLLAR literal
     | DOLLAR IDENTIFIER
     | literal
     | IDENTIFIER
+
     | REGISTER
     | LBRACKET REGISTER RBRACKET
+
     | LBRACKET REGISTER PLUS literal RBRACKET
     | LBRACKET REGISTER PLUS IDENTIFIER RBRACKET
     ;

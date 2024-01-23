@@ -2,6 +2,7 @@
     //C code
     #include "bison.hpp"
     #include <iostream>
+    #include <cstdint>
     using namespace std;
 %}
 
