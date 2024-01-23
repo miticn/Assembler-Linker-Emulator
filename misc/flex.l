@@ -8,21 +8,27 @@
 %option outfile="misc/flex.cpp" header-file="misc/flex.hpp"
 
 %option noyywrap
+%option yylineno
 
 COMMENT   #.*\n
-NUMBER ([0-9])+
+
+NUMBERDEC [0-9]|[1-9][0-9]*
+NUMBERHEX 0[Xx][0-9A-Fa-f]+
+NUMBEROCT 0[0-7]+
+NUMBERBIN 0[Bb][01]+
 IDENTIFIER [A-Za-z_][A-Za-z0-9_]*
 WHITESPACE [ \t]
 STRING   \".*\"
-REGISTER %r(1[0-5]|[0-9])
+REGISTER %r(1[0-5]|[0-9])|%sp|%pc
+CONTROL_REGISTER %cr[0-2]|%status|%handler|%cause
 
 %%
-{NUMBER} {return NUMBER;}
-{COMMENT} {cout << "comment" << endl; return EOL;}
+{NUMBERDEC}|{NUMBERHEX}|{NUMBEROCT}|{NUMBERBIN} {return NUMBER;}
+{COMMENT} {return EOL;}
 "\n" {return EOL;}
 {WHITESPACE}  {}
 "#" {return NUMBER_SIGN;}
-"$" {return DOLLAR;}
+"$" {return DOLLAR;{ cout << "FOUND";}}
 "%" {return PERCENT;}
 ":" {return COLON;}
 "." {return DOT;}
@@ -64,9 +70,32 @@ REGISTER %r(1[0-5]|[0-9])
 "st" {return ST;}
 "csrrd" {return CSRRD;}
 "csrwr" {return CSRWR;}
-{STRING} {return STRING;}
-{REGISTER} {return REGISTER;}
-"" {return CONTROL_REGISTER;}
+{STRING} {
+    //remove quotes
+    yytext[strlen(yytext) - 1] = '\0';
+    yylval.stringValue = strdup(yytext + 1);
+    return STRING;
+}
+{REGISTER} {
+    if (yytext[1] == 's' && yytext[2] == 'p')
+        yylval.intValue = 14;
+    else if (yytext[1] == 'p' && yytext[2] == 'c')
+        yylval.intValue = 15;
+    else
+        yylval.intValue = atoi(yytext + 2);
+    return REGISTER;
+}
+{CONTROL_REGISTER} {
+    if (yytext[1]=='s')
+        yylval.intValue = 0;
+    else if (yytext[1]=='h')
+        yylval.intValue = 1;
+    else if (yytext[1]=='c')
+        yylval.intValue = 2;
+    else 
+        yylval.intValue = atoi(yytext + 3);
+    return CONTROL_REGISTER;
+}
 
 
 {IDENTIFIER} {
@@ -77,6 +106,6 @@ REGISTER %r(1[0-5]|[0-9])
 
 int yyerror(const char* msg)
 {
-    fprintf(stderr, "lexer error: %s\n", msg);
+    fprintf(stderr, "%s. Error line: %d at %s\n",msg, yylineno,yytext);
     return 0;
 }

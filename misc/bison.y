@@ -4,6 +4,7 @@
     #include <string>
     using namespace std;
     #include "../inc/token.hpp"
+    #include "../inc/assembler.hpp"
 	extern int yylex(void);
     extern int yyparse();
     extern FILE *yyin;
@@ -67,9 +68,9 @@
 %token CSRRD
 %token CSRWR
 %token <stringValue> IDENTIFIER
-%token STRING
-%token REGISTER
-%token CONTROL_REGISTER
+%token <stringValue> STRING
+%token <intValue> REGISTER
+%token <intValue> CONTROL_REGISTER
 
 %%
 
@@ -82,14 +83,11 @@ line : EOL
     | label directive EOL
     | label command EOL
     | directive EOL
-    | command EOL{
-        cout << "COMMAND EOL" << endl;
-    }
+    | command EOL
     ;
 
 label : IDENTIFIER COLON  {
-    cout<<$1 <<" test" << endl;
-    tokenList.push_back(new LabelToken($1));
+        Assembler::tokenList.push_back(new LabelToken($1));
     }
     ;
 
@@ -103,56 +101,54 @@ directive: directive_global
     | directive_end
     ;
 
-directive_global : GLOBAL symbols
+directive_global : GLOBAL IDENTIFIER { Assembler::tokenList.push_back(new GlobalDirectiveToken($2));}
+    | directive_global COMMA IDENTIFIER { Assembler::tokenList.push_back(new GlobalDirectiveToken($3));}
     ;
 
-directive_extern : EXTERN symbols
+directive_extern : EXTERN IDENTIFIER { Assembler::tokenList.push_back(new ExternDirectiveToken($2));}
+    | directive_extern COMMA IDENTIFIER { Assembler::tokenList.push_back(new ExternDirectiveToken($3));}
     ;
 
-directive_section : SECTION IDENTIFIER;
+directive_section : SECTION IDENTIFIER { Assembler::tokenList.push_back(new SectionDirectiveToken($2));}
+    ;
 
-directive_word : WORD symbols_or_literals;
+directive_word : WORD literal
+    | WORD IDENTIFIER
+    | directive_word COMMA literal
+    | directive_word COMMA IDENTIFIER
+    ;
 
 directive_skip : SKIP literal;
 
 directive_ascii : ASCII STRING;
 
-directive_equ : EQU literal COMMA ;
+directive_equ : EQU IDENTIFIER COMMA NUMBER;
 
 directive_end : END;
-
-symbols : symbols COMMA IDENTIFIER
-    | IDENTIFIER
-    ;
-
-symbols_or_literals : symbols_or_literals COMMA IDENTIFIER
-    | symbols_or_literals COMMA literal
-    | literal
-    | IDENTIFIER
-    ;
 
 literal : NUMBER;
 
 
-command : HALT
-    | INT {cout << "INT" << endl;}
+command : HALT { Assembler::tokenList.push_back(new HaltCommandToken);}
+    | INT { Assembler::tokenList.push_back(new IntCommandToken);}
     | IRET
-    | RET
+    | RET { Assembler::tokenList.push_back(new RetCommandToken);}
     | PUSH REGISTER
     | POP REGISTER
-    | XCHG REGISTER COMMA REGISTER
-    | ADD REGISTER COMMA REGISTER
-    | SUB REGISTER COMMA REGISTER
-    | MUL REGISTER COMMA REGISTER
-    | DIV REGISTER COMMA REGISTER
-    | NOT REGISTER
-    | AND REGISTER COMMA REGISTER
-    | OR REGISTER COMMA REGISTER
-    | XOR REGISTER COMMA REGISTER
-    | SHL REGISTER COMMA REGISTER
-    | SHR REGISTER COMMA REGISTER
-    | CSRRD CONTROL_REGISTER COMMA REGISTER
-    | CSRWR REGISTER COMMA CONTROL_REGISTER
+    | XCHG REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new XchgCommandToken($2, $4));}
+    | ADD REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new AddCommandToken($2, $4));}
+    | SUB REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new SubCommandToken($2, $4));}
+    | MUL REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new MulCommandToken($2, $4));}
+    | DIV REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new DivCommandToken($2, $4));}
+    | NOT REGISTER { Assembler::tokenList.push_back(new NotCommandToken($2));}
+    | AND REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new AndCommandToken($2, $4));}
+    | OR REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new OrCommandToken($2, $4));}
+    | XOR REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new XorCommandToken($2, $4));}
+    | SHL REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new ShlCommandToken($2, $4));}
+    | SHR REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new ShrCommandToken($2, $4));}
+    | CSRRD CONTROL_REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new CsrrdCommandToken($2, $4));}
+    | CSRWR REGISTER COMMA CONTROL_REGISTER { Assembler::tokenList.push_back(new CsrwrCommandToken($2, $4));}
+    
     | LD operand_data COMMA REGISTER
     | ST REGISTER COMMA operand_data
     | CALL operand_jump
@@ -170,10 +166,10 @@ operand_data : DOLLAR literal
     | DOLLAR IDENTIFIER
     | literal
     | IDENTIFIER
-    | PERCENT REGISTER
-    | LBRACKET PERCENT REGISTER RBRACKET
-    | LBRACKET PERCENT REGISTER PLUS literal RBRACKET
-    | LBRACKET PERCENT REGISTER PLUS IDENTIFIER RBRACKET
+    | REGISTER
+    | LBRACKET REGISTER RBRACKET
+    | LBRACKET REGISTER PLUS literal RBRACKET
+    | LBRACKET REGISTER PLUS IDENTIFIER RBRACKET
     ;
 
 %%

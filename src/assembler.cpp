@@ -1,10 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
 #include <iostream>
-#include "../inc/assembler.hpp"
+#include <list>
 #include "../inc/token.hpp"
+#include "../inc/assembler.hpp"
 using namespace std;
+
+using namespace std;
+//initialise
+list<Token*> Assembler::tokenList;
 
 void Assembler::assemble(char *inputFileName, char *outputFileName) {
     printf("Assembling %s into %s...\n", inputFileName, outputFileName);
@@ -24,16 +29,24 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
     fclose(inputFile);
 
     //print tokenList
+    cout << "Token list: " << tokenList.size()<< endl;
     for (auto token : tokenList) {
         if (token->getType() == TokenType::LABEL) {
             LabelToken *labelToken = (LabelToken*)token;
-            cout << "Label: " << endl;
+            cout << "Label: " << labelToken->getName()<< endl;
         } else if (token->getType() == TokenType::DIRECTIVE) {
             printf("Directive\n");
+            cout << ((GlobalDirectiveToken*)token)->getSymbolName() << endl;
         } else if (token->getType() == TokenType::COMMAND) {
-            printf("Command\n");
+            cout << "Command: " << ((CommandToken*)token)->getName() << endl;
+            cout << "Instruction: " << ((CommandToken*)token)->getInstruction() << endl;
         }
     }
+}
+
+void Assembler::firstPass() {
+    //iterate through tokenList
+    
 }
 
 int main(int argc, char *argv[]) {
