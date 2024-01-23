@@ -1,12 +1,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <iostream>
 #include "../inc/assembler.hpp"
+#include "../inc/token.hpp"
+using namespace std;
 
 void Assembler::assemble(char *inputFileName, char *outputFileName) {
     printf("Assembling %s into %s...\n", inputFileName, outputFileName);
     
+    FILE *inputFile = fopen(inputFileName, "r");
+    if (!inputFile) {
+        perror("Error opening input file");
+        return;
+    }
 
+    // Set yyin to the input file
+    yyin = inputFile;
+    
+    yyparse();
+
+
+    fclose(inputFile);
+
+    //print tokenList
+    for (auto token : tokenList) {
+        if (token->getType() == TokenType::LABEL) {
+            LabelToken *labelToken = (LabelToken*)token;
+            cout << "Label: " << endl;
+        } else if (token->getType() == TokenType::DIRECTIVE) {
+            printf("Directive\n");
+        } else if (token->getType() == TokenType::COMMAND) {
+            printf("Command\n");
+        }
+    }
 }
 
 int main(int argc, char *argv[]) {

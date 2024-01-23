@@ -1,14 +1,26 @@
 %{
-#include <stdio.h>
-#include <stdio.h>
+    #include <stdio.h>
+    #include <iostream>
+    #include <string>
+    using namespace std;
+    #include "../inc/token.hpp"
 	extern int yylex(void);
-  extern int yyparse();
-  extern FILE *yyin;
+    extern int yyparse();
+    extern FILE *yyin;
 	extern void yyerror(const char*);
 %}
 
+%output "misc/bison.cpp"
+%defines "misc/bison.hpp"
+
+%union {
+    int intValue;
+    char* stringValue;
+    // ... other types ...
+}
+
+
 /* declare tokens */
-%token COMMENT
 %token DOLLAR
 %token PERCENT
 %token NUMBER
@@ -54,7 +66,7 @@
 %token ST
 %token CSRRD
 %token CSRWR
-%token IDENTIFIER
+%token <stringValue> IDENTIFIER
 %token STRING
 %token REGISTER
 %token CONTROL_REGISTER
@@ -69,9 +81,16 @@ line : EOL
     | label EOL
     | label directive EOL
     | label command EOL
+    | directive EOL
+    | command EOL{
+        cout << "COMMAND EOL" << endl;
+    }
     ;
 
-label : IDENTIFIER COLON
+label : IDENTIFIER COLON  {
+    cout<<$1 <<" test" << endl;
+    tokenList.push_back(new LabelToken($1));
+    }
     ;
 
 directive: directive_global
@@ -116,7 +135,7 @@ literal : NUMBER;
 
 
 command : HALT
-    | INT
+    | INT {cout << "INT" << endl;}
     | IRET
     | RET
     | PUSH REGISTER

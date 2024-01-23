@@ -1,6 +1,8 @@
+#pragma once
 #include "symbol_table.hpp"
 #include "instruction.hpp"
-#include "../misc/bison.tab.h"
+#include "../misc/flex.hpp"
+#include "../misc/bison.hpp"
 
 class Assembler{
 private:

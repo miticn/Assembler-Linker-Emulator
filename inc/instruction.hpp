@@ -1,3 +1,4 @@
+#pragma once
 #include <cstdint>
 class Instruction{
     uint16_t disp;

@@ -1,11 +1,15 @@
 %{
     //C code
-    #include "bison.tab.h"
+    #include "bison.hpp"
+    #include <iostream>
+    using namespace std;
 %}
+
+%option outfile="misc/flex.cpp" header-file="misc/flex.hpp"
 
 %option noyywrap
 
-COMMENT   "#".*\n
+COMMENT   #.*\n
 NUMBER ([0-9])+
 IDENTIFIER [A-Za-z_][A-Za-z0-9_]*
 WHITESPACE [ \t]
@@ -14,7 +18,7 @@ REGISTER %r(1[0-5]|[0-9])
 
 %%
 {NUMBER} {return NUMBER;}
-{COMMENT} {}
+{COMMENT} {cout << "comment" << endl; return EOL;}
 "\n" {return EOL;}
 {WHITESPACE}  {}
 "#" {return NUMBER_SIGN;}
@@ -65,22 +69,14 @@ REGISTER %r(1[0-5]|[0-9])
 "" {return CONTROL_REGISTER;}
 
 
-{IDENTIFIER} {return IDENTIFIER;}
+{IDENTIFIER} {
+    yylval.stringValue = strdup(yytext);
+    return IDENTIFIER;
+}
 %%
 
 int yyerror(const char* msg)
 {
     fprintf(stderr, "lexer error: %s\n", msg);
-    return 0;
-}
-
-int main(int argc, char** argv)
-{
-    yyin = fopen(argv[1], "r");
-    int token;
-    while(token = yylex())
-    {
-        printf("%d\n", token);
-    }
     return 0;
 }
