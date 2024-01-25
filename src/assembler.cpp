@@ -19,16 +19,10 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
         perror("Error opening input file");
         return;
     }
-
-    // Set yyin to the input file
     yyin = inputFile;
-    
     yyparse();
-
-
     fclose(inputFile);
 
-    //print tokenList
     printTokenList();
 
     firstPass();
@@ -51,26 +45,59 @@ void Assembler::printTokenList() {
 }
 
 void Assembler::firstPass() {
-    //iterate through tokenList and add to symtab all definitions
     for (auto token : tokenList) {
         if (token->getType() == TokenType::LABEL) {
             LabelToken *labelToken = (LabelToken*)token;
 
+
         } else if (token->getType() == TokenType::DIRECTIVE) {
             DirectiveToken *directiveToken = (DirectiveToken*)token;
-            
-            
-        } else if (token->getType() == TokenType::COMMAND) {
-            CommandToken *commandToken = (CommandToken*)token;
-            
-        }
-        token->getSize();
+            if(directiveToken->getName()=="section"){
+                SectionDirectiveToken *sectionToken = (SectionDirectiveToken*)token;
+
+            }
+            else if(directiveToken->getName()=="extern"){
+                ExternDirectiveToken *externToken = (ExternDirectiveToken*)token;
+
+            }
+            else if(directiveToken->getName()=="global"){
+                GlobalDirectiveToken *globalToken = (GlobalDirectiveToken*)token;
+
+            }
+            else if(directiveToken->getName()=="equ"){
+                EquDirectiveToken *equToken = (EquDirectiveToken*)token;
+
+            } else if(directiveToken->getName()=="end"){
+                return;
+            }  
+        } 
+        currentSection->incPosition(token->getSize());
     }
     
 }
 
 void Assembler::secondPass() {
-    
+    this->currentSection = nullptr;
+    for(auto &section : this->sections){
+        section.resetPosition();
+    }
+
+    for (auto token : tokenList) {
+        if (token->getType() == TokenType::DIRECTIVE) {
+            DirectiveToken *directiveToken = (DirectiveToken*)token;
+            if(directiveToken->getName()=="section"){
+                SectionDirectiveToken *sectionToken = (SectionDirectiveToken*)token;
+
+            }//add other directives that generate data
+            else if(directiveToken->getName()=="end"){
+                return;
+            }  
+        } else if(token->getType() == TokenType::COMMAND){
+            CommandToken *commandToken = (CommandToken*)token;
+            
+        }
+        currentSection->incPosition(token->getSize());
+    }
     
 }
 

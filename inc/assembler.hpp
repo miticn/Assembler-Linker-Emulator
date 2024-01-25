@@ -5,6 +5,7 @@
 #include "../misc/flex.hpp"
 #include "../misc/bison.hpp"
 #include "literal_pool.hpp"
+#include "relocation.hpp"
 #include "token.hpp"
 #include <list>
 
@@ -13,9 +14,8 @@ private:
     
     Symbol_table symtab;
     list<Section> sections;
-    vector<uint8_t> objectFile;
-
-    void appendUint32(uint32_t uint);
+    vector<Relocation> relocationTable;
+    Section *currentSection = nullptr;
 
 public:
     static list<Token*> tokenList;

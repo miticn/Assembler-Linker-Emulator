@@ -12,5 +12,5 @@ public:
     uint32_t getSize() const { return size; }
     uint32_t getCurrentPosition() const { return current_position; }
     void resetPosition() { current_position = 0;}
-    void incPosition();
+    void incPosition(uint32_t inc) { current_position += inc; }
 };
