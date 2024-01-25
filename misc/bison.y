@@ -18,22 +18,11 @@
 %defines "misc/bison.hpp"
 
 %union {
-    struct PassOperand{
-        bool hasRegister;
-        bool hasLiteral;
-        bool hasSymbol;
-        uint reg;
-        uint literal;
-        char* symbol;
-    };
     uint intValue;
     char* stringValue;
     // ... other types ...
-    PassOperand passOperand;
 }
 
-%type <passOperand> operand_jump
-%type <passOperand> operand_data
 /* declare tokens */
 %token DOLLAR
 %token PERCENT
@@ -162,75 +151,75 @@ command : HALT { Assembler::tokenList.push_back(new HaltCommandToken);}
     | SHR REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new ShrCommandToken($2, $4));}
     | CSRRD CONTROL_REGISTER COMMA REGISTER { Assembler::tokenList.push_back(new CsrrdCommandToken($2, $4));}
     | CSRWR REGISTER COMMA CONTROL_REGISTER { Assembler::tokenList.push_back(new CsrwrCommandToken($2, $4));}
-    
-    | LD operand_data COMMA REGISTER
-    | ST REGISTER COMMA operand_data
 
-    | CALL operand_jump
-    | JMP operand_jump { 
-        
-    }
-    | BEQ REGISTER COMMA REGISTER COMMA operand_jump
-    | BNE REGISTER COMMA REGISTER COMMA operand_jump
-    | BGT REGISTER COMMA REGISTER COMMA operand_jump
+    | CALL NUMBER { Assembler::tokenList.push_back(new CallCommandToken(OperandJump($2))); }
+    | CALL IDENTIFIER { Assembler::tokenList.push_back(new CallCommandToken(OperandJump($2))); }
+    | JMP NUMBER { Assembler::tokenList.push_back(new JmpCommandToken(OperandJump($2))); }
+    | JMP IDENTIFIER { Assembler::tokenList.push_back(new JmpCommandToken(OperandJump($2))); }
+    | BEQ REGISTER COMMA REGISTER COMMA NUMBER { Assembler::tokenList.push_back(new BeqCommandToken($2, $4, OperandJump($6))); }
+    | BEQ REGISTER COMMA REGISTER COMMA IDENTIFIER { Assembler::tokenList.push_back(new BeqCommandToken($2, $4, OperandJump($6))); }
+    | BNE REGISTER COMMA REGISTER COMMA NUMBER { Assembler::tokenList.push_back(new BneCommandToken($2, $4, OperandJump($6))); }
+    | BNE REGISTER COMMA REGISTER COMMA IDENTIFIER { Assembler::tokenList.push_back(new BneCommandToken($2, $4, OperandJump($6))); }
+    | BGT REGISTER COMMA REGISTER COMMA NUMBER { Assembler::tokenList.push_back(new BgtCommandToken($2, $4, OperandJump($6))); }
+    | BGT REGISTER COMMA REGISTER COMMA IDENTIFIER { Assembler::tokenList.push_back(new BgtCommandToken($2, $4, OperandJump($6))); }
+    | ld_instuction
+    | st_instuction
     ;
 
-operand_jump : NUMBER {
-        $$.hasLiteral = true;
-        $$.hasRegister = $$.hasSymbol = false;
-        $$.literal = $1;
+ld_instuction: LD DOLLAR NUMBER COMMA REGISTER { 
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::LITERAL_VALUE, $3, nullptr, 0), $5)); 
     }
-    | IDENTIFIER { 
-        $$.hasSymbol = true;
-        $$.hasLiteral = $$.hasRegister = false;
-        $$.symbol = $1;
+    | LD DOLLAR IDENTIFIER COMMA REGISTER{ 
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::SYMBOL_VALUE, 0, $3, 0), $5)); 
+    }
+    | LD NUMBER COMMA REGISTER{
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::LITERAL_VALUE, $2, nullptr, 0), $4));
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, nullptr, $4), $4)); 
+
+    }
+    | LD IDENTIFIER COMMA REGISTER{
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::SYMBOL_VALUE, 0, $2, 0), $4));
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, nullptr, $4), $4)); 
+    }
+    | LD REGISTER COMMA REGISTER{
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::REGISTER_VALUE, 0, nullptr, $2), $4)); 
+    }
+    | LD LBRACKET REGISTER RBRACKET COMMA REGISTER{
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, nullptr, $3), $6)); 
+    }
+    | LD LBRACKET REGISTER PLUS NUMBER RBRACKET COMMA REGISTER{
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_LITERAL, $5, nullptr, $3), $8)); 
+    }
+    | LD LBRACKET REGISTER PLUS IDENTIFIER RBRACKET COMMA REGISTER{
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_SYMBOL, 0, $5, $3), $8));
     }
     ;
 
-operand_data : DOLLAR NUMBER{
-        $$.hasLiteral = true;
-        $$.hasRegister = $$.hasSymbol = false;
-        $$.literal = $2;
+st_instuction: ST REGISTER COMMA DOLLAR NUMBER {
+                cout<<"ERROR: StCommandToken: can't change literal value."<<endl;
+                exit(1);
+            }
+    | ST REGISTER COMMA DOLLAR IDENTIFIER{
+                cout<<"ERROR: StCommandToken: can't change symbol value."<<endl;
+                exit(1);
     }
-    | DOLLAR IDENTIFIER{
-        $$.hasSymbol = true;
-        $$.hasLiteral = $$.hasRegister = false;
-        $$.symbol = $2;
+    | ST REGISTER COMMA NUMBER{
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_LITERAL, $4, nullptr, 0)));
     }
-    | NUMBER{
-        $$.hasLiteral = true;
-        $$.hasRegister = $$.hasSymbol = false;
-        $$.literal = $1;
+    | ST REGISTER COMMA IDENTIFIER{
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_SYMBOL, 0, $4, 0)));
     }
-    | IDENTIFIER{
-        $$.hasSymbol = true;
-        $$.hasRegister = $$.hasLiteral = false;
-
-        $$.symbol = $1;
+    | ST REGISTER COMMA REGISTER{
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::REGISTER_VALUE, 0, nullptr, $4)));
     }
-
-    | REGISTER{
-        $$.hasRegister = true;
-        $$.hasLiteral = $$.hasSymbol = false;
-        $$.reg = $1;
+    | ST REGISTER COMMA LBRACKET REGISTER RBRACKET{
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, nullptr, $5)));
     }
-    | LBRACKET REGISTER RBRACKET{
-        $$.hasRegister = true;
-        $$.hasLiteral = $$.hasSymbol = false;
-        $$.reg = $2;
+    | ST REGISTER COMMA LBRACKET REGISTER PLUS NUMBER RBRACKET{
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_LITERAL, $7, nullptr, $5)));
     }
-
-    | LBRACKET REGISTER PLUS NUMBER RBRACKET{
-        $$.hasLiteral = $$.hasRegister = true;
-        $$.hasSymbol = false;
-        $$.reg = $2;
-        $$.literal = $4;
-    }
-    | LBRACKET REGISTER PLUS IDENTIFIER RBRACKET{
-        $$.hasSymbol = $$.hasRegister = true;
-        $$.hasLiteral = false;
-        $$.reg = $2;
-        $$.symbol = $4;
+    | ST REGISTER COMMA LBRACKET REGISTER PLUS IDENTIFIER RBRACKET{
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_SYMBOL, 0, $7, $5)));
     }
     ;
 

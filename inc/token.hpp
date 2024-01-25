@@ -60,7 +60,7 @@ struct CommandToken : public Token{
     
     virtual string getName() = 0;
     virtual uint32_t getInstruction()  {
-        Instruction instruction(oc, mod, regA, regB, regB, disp);
+        Instruction instruction(oc, mod, regA, regB, regC, disp);
         return instruction.getUintFromInstruction();
     }
     TokenType getType() override {
