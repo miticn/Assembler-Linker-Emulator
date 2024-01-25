@@ -29,14 +29,20 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
     fclose(inputFile);
 
     //print tokenList
+    printTokenList();
+
+    firstPass();
+    secondPass();
+}
+
+void Assembler::printTokenList() {
     cout << "Token list: " << tokenList.size()<< endl;
     for (auto token : tokenList) {
         if (token->getType() == TokenType::LABEL) {
             LabelToken *labelToken = (LabelToken*)token;
             cout << "Label: " << labelToken->getName()<< endl;
         } else if (token->getType() == TokenType::DIRECTIVE) {
-            printf("Directive\n");
-            cout << ((GlobalDirectiveToken*)token)->getSymbolName() << endl;
+            cout << "Directive: " << ((DirectiveToken*)token)->getName() << endl;
         } else if (token->getType() == TokenType::COMMAND) {
             cout << "Command: " << ((CommandToken*)token)->getName() << endl;
             cout << "Instruction: " << ((CommandToken*)token)->getInstruction() << endl;
@@ -45,7 +51,26 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
 }
 
 void Assembler::firstPass() {
-    //iterate through tokenList
+    //iterate through tokenList and add to symtab all definitions
+    for (auto token : tokenList) {
+        if (token->getType() == TokenType::LABEL) {
+            LabelToken *labelToken = (LabelToken*)token;
+
+        } else if (token->getType() == TokenType::DIRECTIVE) {
+            DirectiveToken *directiveToken = (DirectiveToken*)token;
+            
+            
+        } else if (token->getType() == TokenType::COMMAND) {
+            CommandToken *commandToken = (CommandToken*)token;
+            
+        }
+        token->getSize();
+    }
+    
+}
+
+void Assembler::secondPass() {
+    
     
 }
 

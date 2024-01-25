@@ -4,6 +4,9 @@
 #include "section.hpp"
 #include "../misc/flex.hpp"
 #include "../misc/bison.hpp"
+#include "literal_pool.hpp"
+#include "token.hpp"
+#include <list>
 
 class Assembler{
 private:
@@ -18,4 +21,6 @@ public:
     static list<Token*> tokenList;
     void assemble(char *inputFileName, char *outputFileName);
     void firstPass();
+    void secondPass();
+    void printTokenList();
 };

@@ -9,11 +9,12 @@ struct Symbol{
     enum Bind {LOCAL, GLOBAL};
 
     uint32_t value;
-    //uint32_t size;
     Type type;
     Bind bind;
     string name;
     uint32_t section_index;//Ndx
+    bool globalDirective;
+    bool externDirective;
 
     Symbol(uint32_t value, Type type, Bind bind, const string& name, uint32_t section_index) : value(value), type(type), bind(bind), name(name), section_index(section_index) {}
 };

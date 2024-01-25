@@ -13,6 +13,7 @@ enum TokenType{LABEL, DIRECTIVE, COMMAND};
 struct Token{
     virtual uint32_t getSize() = 0;
     virtual TokenType getType() = 0;
+    virtual string getName() = 0;
 };
 
 struct LabelToken : public Token{
