@@ -62,10 +62,12 @@ struct WordDirectiveToken : public DirectiveToken{
         return 4;
     }
     uint32_t value;
+    char *symbol;
     bool isBackpatchingNeeded;
     string getName(){ return "word"; }
     uint32_t getValue(){ return value; }
-    WordDirectiveToken(uint32_t value, bool isBackpatchingNeeded = false): value(value), isBackpatchingNeeded(isBackpatchingNeeded) {}
+    WordDirectiveToken(uint32_t value, char * symbol = nullptr, bool isBackpatchingNeeded = false)
+        : value(value), symbol(symbol), isBackpatchingNeeded(isBackpatchingNeeded) {}
 };
 
 struct SkipDirectiveToken : public DirectiveToken{

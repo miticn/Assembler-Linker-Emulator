@@ -114,19 +114,23 @@ directive_extern : EXTERN IDENTIFIER { Assembler::tokenList.push_back(new Extern
 directive_section : SECTION IDENTIFIER { Assembler::tokenList.push_back(new SectionDirectiveToken($2));}
     ;
 
-directive_word : WORD NUMBER
-    | WORD IDENTIFIER
-    | directive_word COMMA NUMBER
-    | directive_word COMMA IDENTIFIER
+directive_word : WORD NUMBER { Assembler::tokenList.push_back(new WordDirectiveToken($2));}
+    | WORD IDENTIFIER { Assembler::tokenList.push_back(new WordDirectiveToken(0,$2,true));}
+    | directive_word COMMA NUMBER { Assembler::tokenList.push_back(new WordDirectiveToken($3));}
+    | directive_word COMMA IDENTIFIER { Assembler::tokenList.push_back(new WordDirectiveToken(0,$3,true));}
     ;
 
-directive_skip : SKIP NUMBER;
+directive_skip : SKIP NUMBER { Assembler::tokenList.push_back(new SkipDirectiveToken($2));}
+    ;
 
-directive_ascii : ASCII STRING;
+directive_ascii : ASCII STRING { Assembler::tokenList.push_back(new AsciiDirectiveToken($2));}
+    ;
 
-directive_equ : EQU IDENTIFIER COMMA NUMBER;
+directive_equ : EQU IDENTIFIER COMMA NUMBER { Assembler::tokenList.push_back(new EquDirectiveToken($2, $4));}
+    ;
 
-directive_end : END;
+directive_end : END { Assembler::tokenList.push_back(new EndDirectiveToken);}
+    ;
 
 
 command : HALT { Assembler::tokenList.push_back(new HaltCommandToken);}
