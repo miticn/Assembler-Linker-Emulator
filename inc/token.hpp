@@ -3,6 +3,7 @@
 #include <list>
 #include <cstdint>
 #include "instruction.hpp"
+#include "operand.hpp"
 using namespace std;
 
 
@@ -300,5 +301,141 @@ struct PopStatusCommandToken : public CommandToken{
         this->regA = 0;
         this->disp = (int16_t)4;
         this->regB = 14;
+    }
+};
+
+struct JumpCommandToken : public CommandToken{
+    OperandJump operand;
+};
+
+struct JmpCommandToken : public JumpCommandToken{
+    string getName() override {
+        return "jmp";
+    }
+    JmpCommandToken(OperandJump operand){
+        this->regA = 15;
+        this->oc = 0b0011;
+        this->mod = 0b0000;
+        this->operand = operand;
+    }
+};
+
+struct BeqCommandToken : public JumpCommandToken{
+    string getName() override {
+        return "beq";
+    }
+    BeqCommandToken(uint8_t reg1, uint8_t reg2, OperandJump operand){
+        this->regA = 15;
+        this->regB = reg1;
+        this->regC = reg2;
+        this->oc = 0b0011;
+        this->mod = 0b0001;
+        this->operand = operand;
+    }
+};
+
+struct BneCommandToken : public JumpCommandToken{
+    string getName() override {
+        return "bne";
+    }
+    BneCommandToken(uint8_t reg1, uint8_t reg2, OperandJump operand){
+        this->regA = 15;
+        this->regB = reg1;
+        this->regC = reg2;
+        this->oc = 0b0011;
+        this->mod = 0b0010;
+        this->operand = operand;
+    }
+};
+
+struct BgtCommandToken : public JumpCommandToken{
+    string getName() override {
+        return "bgt";
+    }
+    BgtCommandToken(uint8_t reg1, uint8_t reg2, OperandJump operand){
+        this->regA = 15;
+        this->regB = reg1;
+        this->regC = reg2;
+        this->oc = 0b0011;
+        this->mod = 0b0011;
+        this->operand = operand;
+    }
+};
+
+struct CallCommandToken : public JumpCommandToken{
+    string getName() override {
+        return "call";
+    }
+    CallCommandToken(OperandJump operand){
+        this->regA = 15;
+        this->oc = 0b0010;
+        this->mod = 0b0000;
+        this->operand = operand;
+    }
+};
+
+
+struct LdCommandToken : public CommandToken{
+    OperandData operand;
+    string getName() override {
+        return "ld";
+    }
+    LdCommandToken(OperandData operand, uint8_t reg1) : operand(operand){
+        this->oc = 0b1001;
+        this->regA = reg1;
+        switch(operand.type){
+            case OperandData::LITERAL_VALUE:
+                if(operand.literal > 0xFF){
+                    this->regB = 15;
+                    this->mod = 0b0010;
+                    //backpatch disp to literal table
+                }
+                else{
+                    this->disp = operand.literal;
+                    this->mod = 0b0001;
+                    this->operand.isBackpatchingNeeded = false;
+                }
+                break;
+            case OperandData::MEMORY_LITERAL:
+                if(operand.literal > 0xFF){
+                    this->regB = 15;
+                    //what to do here?
+                }
+                else{
+                    this->disp = operand.literal;
+                    this->mod = 0b0010;
+                    this->operand.isBackpatchingNeeded = false;
+                }
+                
+                break;
+            case OperandData::SYMBOL_VALUE:
+                this->regB = 15;
+                this->mod = 0b0010;
+                //backpatch disp to symbol table
+                break;
+            case OperandData::MEMORY_SYMBOL:
+                this->regB = 15;
+                //what to do here?
+                break;
+            case OperandData::REGISTER_VALUE:
+                this->regB = operand.reg;
+                this->mod = 0b0001;
+                break;
+            case OperandData::MEMORY_REGISTER:
+                this->regB = operand.reg;
+                this->mod = 0b0010;
+                break;
+            case OperandData::MEMORY_REGISTER_OFFSET_LITERAL:
+                this->regB = operand.reg;
+                this->mod = 0b0010;
+                this->disp = operand.literal;
+                break;
+            case OperandData::MEMORY_REGISTER_OFFSET_SYMBOL:
+                this->regB = operand.reg;
+                this->mod = 0b0010;
+                //backpatch disp
+                break;
+        }
+        
     }
 };

@@ -24,12 +24,15 @@ REGISTER %r(1[0-5]|[0-9])|%sp|%pc
 CONTROL_REGISTER %cr[0-2]|%status|%handler|%cause
 
 %%
-{NUMBERDEC}|{NUMBERHEX}|{NUMBEROCT}|{NUMBERBIN} {return NUMBER;}
+{NUMBERDEC}|{NUMBERHEX}|{NUMBEROCT}|{NUMBERBIN} {
+    yylval.intValue = strtol(yytext, NULL, 0);
+    return NUMBER;
+}
 {COMMENT} {return EOL;}
 "\n" {return EOL;}
 {WHITESPACE}  {}
 "#" {return NUMBER_SIGN;}
-"$" {return DOLLAR;{ cout << "FOUND";}}
+"$" {return DOLLAR;}
 "%" {return PERCENT;}
 ":" {return COLON;}
 "." {return DOT;}

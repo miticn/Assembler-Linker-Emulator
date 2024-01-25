@@ -6,7 +6,7 @@
     using namespace std;
     #include "../inc/token.hpp"
     #include "../inc/assembler.hpp"
-    #include "../inc/operand.hpp"
+    //#include "../inc/operand.hpp"
 	extern int yylex(void);
     extern int yyparse();
     extern FILE *yyin;
@@ -18,12 +18,22 @@
 %defines "misc/bison.hpp"
 
 %union {
+    struct PassOperand{
+        bool hasRegister;
+        bool hasLiteral;
+        bool hasSymbol;
+        uint reg;
+        uint literal;
+        char* symbol;
+    };
     uint intValue;
     char* stringValue;
     // ... other types ...
+    PassOperand passOperand;
 }
 
-
+%type <passOperand> operand_jump
+%type <passOperand> operand_data
 /* declare tokens */
 %token DOLLAR
 %token PERCENT
@@ -115,21 +125,19 @@ directive_extern : EXTERN IDENTIFIER { Assembler::tokenList.push_back(new Extern
 directive_section : SECTION IDENTIFIER { Assembler::tokenList.push_back(new SectionDirectiveToken($2));}
     ;
 
-directive_word : WORD literal
+directive_word : WORD NUMBER
     | WORD IDENTIFIER
-    | directive_word COMMA literal
+    | directive_word COMMA NUMBER
     | directive_word COMMA IDENTIFIER
     ;
 
-directive_skip : SKIP literal;
+directive_skip : SKIP NUMBER;
 
 directive_ascii : ASCII STRING;
 
 directive_equ : EQU IDENTIFIER COMMA NUMBER;
 
 directive_end : END;
-
-literal : NUMBER;
 
 
 command : HALT { Assembler::tokenList.push_back(new HaltCommandToken);}
@@ -159,26 +167,71 @@ command : HALT { Assembler::tokenList.push_back(new HaltCommandToken);}
     | ST REGISTER COMMA operand_data
 
     | CALL operand_jump
-    | JMP operand_jump
+    | JMP operand_jump { 
+        
+    }
     | BEQ REGISTER COMMA REGISTER COMMA operand_jump
     | BNE REGISTER COMMA REGISTER COMMA operand_jump
     | BGT REGISTER COMMA REGISTER COMMA operand_jump
     ;
 
-operand_jump : literal
-    | IDENTIFIER
+operand_jump : NUMBER {
+        $$.hasLiteral = true;
+        $$.hasRegister = $$.hasSymbol = false;
+        $$.literal = $1;
+    }
+    | IDENTIFIER { 
+        $$.hasSymbol = true;
+        $$.hasLiteral = $$.hasRegister = false;
+        $$.symbol = $1;
+    }
     ;
 
-operand_data : DOLLAR literal
-    | DOLLAR IDENTIFIER
-    | literal
-    | IDENTIFIER
+operand_data : DOLLAR NUMBER{
+        $$.hasLiteral = true;
+        $$.hasRegister = $$.hasSymbol = false;
+        $$.literal = $2;
+    }
+    | DOLLAR IDENTIFIER{
+        $$.hasSymbol = true;
+        $$.hasLiteral = $$.hasRegister = false;
+        $$.symbol = $2;
+    }
+    | NUMBER{
+        $$.hasLiteral = true;
+        $$.hasRegister = $$.hasSymbol = false;
+        $$.literal = $1;
+    }
+    | IDENTIFIER{
+        $$.hasSymbol = true;
+        $$.hasRegister = $$.hasLiteral = false;
 
-    | REGISTER
-    | LBRACKET REGISTER RBRACKET
+        $$.symbol = $1;
+    }
 
-    | LBRACKET REGISTER PLUS literal RBRACKET
-    | LBRACKET REGISTER PLUS IDENTIFIER RBRACKET
+    | REGISTER{
+        $$.hasRegister = true;
+        $$.hasLiteral = $$.hasSymbol = false;
+        $$.reg = $1;
+    }
+    | LBRACKET REGISTER RBRACKET{
+        $$.hasRegister = true;
+        $$.hasLiteral = $$.hasSymbol = false;
+        $$.reg = $2;
+    }
+
+    | LBRACKET REGISTER PLUS NUMBER RBRACKET{
+        $$.hasLiteral = $$.hasRegister = true;
+        $$.hasSymbol = false;
+        $$.reg = $2;
+        $$.literal = $4;
+    }
+    | LBRACKET REGISTER PLUS IDENTIFIER RBRACKET{
+        $$.hasSymbol = $$.hasRegister = true;
+        $$.hasLiteral = false;
+        $$.reg = $2;
+        $$.symbol = $4;
+    }
     ;
 
 %%
