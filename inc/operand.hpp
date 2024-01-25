@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <iostream>
+using namespace std;
 
 struct OperandJump{
     enum OperandJumpType{
