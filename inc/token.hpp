@@ -11,11 +11,15 @@ using namespace std;
 enum TokenType{LABEL, DIRECTIVE, COMMAND};
 
 struct Token{
+    virtual uint32_t getSize() = 0;
     virtual TokenType getType() = 0;
 };
 
 struct LabelToken : public Token{
     string name;
+    uint32_t getSize() override {
+        return 0;
+    }
     string getName(){ return name; }
     TokenType getType() override {
         return TokenType::LABEL;
@@ -24,6 +28,9 @@ struct LabelToken : public Token{
 };
 
 struct DirectiveToken : public Token{
+    virtual uint32_t getSize() override {
+        return 0;
+    }
     TokenType getType() override {
         return TokenType::DIRECTIVE;
     }
@@ -50,6 +57,48 @@ struct SectionDirectiveToken : public DirectiveToken{
     SectionDirectiveToken(const string &sectionName){ this->sectionName = sectionName; }
 };
 
+struct WordDirectiveToken : public DirectiveToken{
+    uint32_t getSize() override {
+        return 4;
+    }
+    uint32_t value;
+    bool isBackpatchingNeeded;
+    string getName(){ return "word"; }
+    uint32_t getValue(){ return value; }
+    WordDirectiveToken(uint32_t value, bool isBackpatchingNeeded = false): value(value), isBackpatchingNeeded(isBackpatchingNeeded) {}
+};
+
+struct SkipDirectiveToken : public DirectiveToken{
+    uint32_t size;
+    string getName(){ return "skip"; }
+    SkipDirectiveToken(uint32_t size): size(size) {}
+    uint32_t getSize() override {
+        return size;
+    }
+};
+
+struct AsciiDirectiveToken : public DirectiveToken{
+    char *str;
+    string getName(){ return "ascii"; }
+    AsciiDirectiveToken(char *str): str(str) {}
+    uint32_t getSize() override {
+        return strlen(str);
+    }
+};
+
+struct EquDirectiveToken : public DirectiveToken{
+    string symbolName;
+    uint32_t value;
+    string getName(){ return "equ"; }
+    string getSymbolName(){ return symbolName; }
+    uint32_t getValue(){ return value; }
+    EquDirectiveToken(const string &symbolName, uint32_t value): symbolName(symbolName), value(value) {}
+};
+
+struct EndDirectiveToken : public DirectiveToken{
+    string getName(){ return "end"; }
+};
+
 struct CommandToken : public Token{
     uint8_t oc = 0;
     uint8_t mod = 0;
@@ -65,6 +114,9 @@ struct CommandToken : public Token{
     }
     TokenType getType() override {
         return TokenType::COMMAND;
+    }
+    uint32_t getSize() override {
+        return 4;
     }
 };
 
