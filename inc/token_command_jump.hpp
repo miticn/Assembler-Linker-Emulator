@@ -1,10 +1,14 @@
 #pragma once
 #include "token.hpp"
 #include "token_command_generic.hpp"
-struct JumpCommandToken : public CommandToken{
+struct JumpCommandToken : public OperandCommandToken{
     OperandJump operand;
     bool isBackpatchingNeeded() override {
         return true;
+    }
+
+    Operand* getOperandPtr() override {
+        return &operand;
     }
 };
 

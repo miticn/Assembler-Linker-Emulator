@@ -182,9 +182,23 @@ void Assembler::secondPass() {
             CommandToken *commandToken = (CommandToken*)token;
             currentSection->add4Bytes(commandToken->getInstruction());
             if(commandToken->isBackpatchingNeeded()){
-                //Relocation relocation = Relocation(currentSection->getCurrentPosition()-2, 0, this->currentSectionIndex);
-                //this->relocationTable.push_back(relocation);
-                //get symbol or literal from operand
+                //check if operand has literal or symbol
+                DataCommandToken *dataCommandToken = (DataCommandToken*)token;
+                Operand *operand = dataCommandToken->getOperandPtr();
+                if(operand->hasLiteral()){
+
+                }else if (operand->hasSymbol()){
+                    if(this->relocatableSymbols.find(operand->symbol) != this->relocatableSymbols.end()){
+                        //this->relocationTable.push_back(relocation);
+                    }
+
+                }else{
+                    cout << "Error: Operand has no literal or symbol, can't be backpatched" << endl;
+                }
+                
+
+                
+                
             }
         }
         currentSection->incPosition(token->getSize());

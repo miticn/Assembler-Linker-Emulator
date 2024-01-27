@@ -2,13 +2,17 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "literal_pool.hpp"
 using namespace std;
 class Section{
 private:
     string name;
     uint32_t size, current_position;
     vector<uint8_t> data;
+    
 public:
+    LiteralPool literal_pool;
+    
     Section(const string &name){this->name = name; size = 0; current_position = 0;}
     uint32_t getSize() const { return size; }
     uint32_t getCurrentPosition() const { return current_position; }

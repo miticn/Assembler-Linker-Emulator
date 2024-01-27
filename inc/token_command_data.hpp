@@ -2,15 +2,24 @@
 #include "token.hpp"
 #include "token_command_generic.hpp"
 
-struct LdCommandToken : public CommandToken{
+struct DataCommandToken : public OperandCommandToken{
     OperandData operand;
     bool isBackpatchingNeeded() override {
         return operand.isBackpatchingNeeded;
     }
+    Operand* getOperandPtr() override {
+        return &operand;
+    }
+    DataCommandToken(OperandData operand) : operand(operand){}
+
+};
+
+struct LdCommandToken : public DataCommandToken{
+    
     string getName() override {
         return "ld";
     }
-    LdCommandToken(OperandData operand, uint8_t reg1) : operand(operand){
+    LdCommandToken(OperandData operand, uint8_t reg1) : DataCommandToken(operand){
         this->oc = 0b1001;
         this->regA = reg1;
         switch(operand.type){
@@ -68,15 +77,11 @@ struct LdCommandToken : public CommandToken{
 
 
 
-struct StCommandToken : public CommandToken{
-    OperandData operand;
+struct StCommandToken : public DataCommandToken{
     string getName() override {
         return "st";
     }
-    bool isBackpatchingNeeded() override {
-        return operand.isBackpatchingNeeded;
-    }
-    StCommandToken(uint8_t reg1, OperandData operand) : operand(operand){
+    StCommandToken(uint8_t reg1, OperandData operand) : DataCommandToken(operand){
         this->oc = 0b1000;
         this->regC = reg1;
         switch(operand.type){

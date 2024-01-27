@@ -21,6 +21,12 @@ struct CommandToken : public Token{
     }
 };
 
+struct OperandCommandToken : public CommandToken{
+    
+
+    virtual Operand*  getOperandPtr() = 0;
+};
+
 struct HaltCommandToken : public CommandToken{
     string getName() override {
         return "halt";
