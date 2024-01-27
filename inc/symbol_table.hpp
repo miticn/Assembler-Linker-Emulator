@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <iostream>
 using namespace std;
 
 struct Symbol{
@@ -32,5 +33,25 @@ public:
     }
     void addSymbol(const string& name){
         symbols.push_back(Symbol(0, Symbol::Type::SECTION, Symbol::Bind::LOCAL, name, insert_section_index));
+    }
+
+    void addSymbol(const Symbol &symbol){
+        symbols.push_back(symbol);
+    }
+
+    Symbol* findSymbol(const string& name) {
+        for (auto& symbol : symbols) {
+            if (symbol.name == name) {
+                return &symbol;
+            }
+        }
+        return nullptr;
+    }
+
+    void printSymbolTable() {
+        cout << "Symbol Table:\n";
+        for (const auto& symbol : symbols) {
+            cout << "Name: " << symbol.name << ", Type: " << symbol.type << ", Bind: " << symbol.bind << ", Value: " << symbol.value << "\n";
+        }
     }
 };

@@ -48,25 +48,70 @@ void Assembler::firstPass() {
     for (auto token : tokenList) {
         if (token->getType() == TokenType::LABEL) {
             LabelToken *labelToken = (LabelToken*)token;
-
-
+            uint32_t section_index = 0;
+            Symbol *symbolInTable = this->symtab.findSymbol(labelToken->getName());
+            if (symbolInTable) {
+                if (symbolInTable->section_index == -1){
+                    symbolInTable->section_index = section_index;
+                    symbolInTable->value = currentSection->getCurrentPosition();
+                }
+                else{
+                    cout << "Error: Label " << labelToken->getName() << " already defined" << endl;
+                }
+            } else {
+                Symbol symbol = Symbol(currentSection->getCurrentPosition(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, labelToken->getName(), section_index);
+                this->symtab.addSymbol(symbol);
+            }
         } else if (token->getType() == TokenType::DIRECTIVE) {
             DirectiveToken *directiveToken = (DirectiveToken*)token;
             if(directiveToken->getName()=="section"){
                 SectionDirectiveToken *sectionToken = (SectionDirectiveToken*)token;
-
+                sectionToken->getSectionName();
+                this->sections.push_back(Section(sectionToken->getSectionName()));
             }
             else if(directiveToken->getName()=="extern"){
                 ExternDirectiveToken *externToken = (ExternDirectiveToken*)token;
-
+                Symbol *symbolInTable = this->symtab.findSymbol(externToken->getSymbolName());
+                if (symbolInTable == nullptr) {
+                    uint32_t section_index = -1;
+                    Symbol symbol = Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::GLOBAL, externToken->getSymbolName(), section_index);
+                    symbol.externDirective = true;
+                    this->symtab.addSymbol(symbol);
+                } else{
+                    symbolInTable->bind = Symbol::Bind::GLOBAL;
+                    symbolInTable->externDirective = true;
+                }
             }
             else if(directiveToken->getName()=="global"){
                 GlobalDirectiveToken *globalToken = (GlobalDirectiveToken*)token;
+                Symbol *symbolInTable = this->symtab.findSymbol(globalToken->getSymbolName());
+                if (symbolInTable == nullptr) {
+                    uint32_t section_index = -1;
+                    Symbol symbol = Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::GLOBAL, globalToken->getSymbolName(), section_index);
+                    symbol.globalDirective = true;
+                    this->symtab.addSymbol(symbol);
+                } else{
+                    symbolInTable->bind = Symbol::Bind::GLOBAL;
+                    symbolInTable->globalDirective = true;
+                }
 
             }
             else if(directiveToken->getName()=="equ"){
                 EquDirectiveToken *equToken = (EquDirectiveToken*)token;
-
+                uint32_t section_index = 0;
+                Symbol *symbolInTable = this->symtab.findSymbol(equToken->getName());
+                if (symbolInTable) {
+                    if (symbolInTable->section_index == -1){
+                        symbolInTable->section_index = section_index;
+                        symbolInTable->value = equToken->getValue();
+                    }
+                    else{
+                        cout << "Error: Label " << equToken->getName() << " already defined" << endl;
+                    }
+                }else {
+                    Symbol symbol = Symbol(equToken->getValue(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, equToken->getName(), section_index);
+                    this->symtab.addSymbol(symbol);
+                }
             } else if(directiveToken->getName()=="end"){
                 return;
             }  
