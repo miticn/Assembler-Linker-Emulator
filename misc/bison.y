@@ -5,6 +5,10 @@
     #include <cstdint>
     using namespace std;
     #include "../inc/token.hpp"
+    #include "../inc/token_directive.hpp"
+    #include "../inc/token_command_generic.hpp"
+    #include "../inc/token_command_jump.hpp"
+    #include "../inc/token_command_data.hpp"
     #include "../inc/assembler.hpp"
     //#include "../inc/operand.hpp"
 	extern int yylex(void);

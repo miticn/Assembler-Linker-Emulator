@@ -4,6 +4,10 @@
 #include <iostream>
 #include <list>
 #include "../inc/token.hpp"
+#include "../inc/token_command_generic.hpp"
+#include "../inc/token_command_data.hpp"
+#include "../inc/token_command_jump.hpp"
+#include "../inc/token_directive.hpp"
 #include "../inc/assembler.hpp"
 using namespace std;
 
@@ -54,9 +58,10 @@ void Assembler::firstPass() {
                 if (symbolInTable->section_index == 0){
                     symbolInTable->section_index = section_index;
                     symbolInTable->value = currentSection->getCurrentPosition();
+                    relocatableSymbols.insert(labelToken->getName());
                 }
                 else{
-                    cout << "Error: Label " << labelToken->getName() << " already defined" << endl;
+                    cout << "Error: Symbol " << labelToken->getName() << " already defined" << endl;
                 }
             } else {
                 Symbol symbol = Symbol(currentSection->getCurrentPosition(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, labelToken->getName(), section_index);
@@ -107,7 +112,7 @@ void Assembler::firstPass() {
                         symbolInTable->value = equToken->getValue();
                     }
                     else{
-                        cout << "Error: Label " << equToken->getName() << " already defined" << endl;
+                        cout << "Error: Symbol " << equToken->getName() << " already defined" << endl;
                     }
                 }else {
                     Symbol symbol = Symbol(equToken->getValue(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, equToken->getName(), section_index);
@@ -144,9 +149,14 @@ void Assembler::secondPass() {
                         cout << "Error: Symbol " << wordToken->getSymbol() << " not defined" << endl;
                     } else if (symbolInTable->section_index == 0){
                         //needs realocation
+                        currentSection->add4Bytes(0);
                     } else{
-                        //no realocation
                         currentSection->add4Bytes(symbolInTable->value);
+                        if(this->relocatableSymbols.find(symbolInTable->name) != this->relocatableSymbols.end()){
+                            Relocation relocation = Relocation(currentSection->getCurrentPosition()-4, 0, this->currentSectionIndex);
+                            this->relocationTable.push_back(relocation);
+                        }
+
                     }
                 } else{
                     //literal
@@ -172,8 +182,9 @@ void Assembler::secondPass() {
             CommandToken *commandToken = (CommandToken*)token;
             currentSection->add4Bytes(commandToken->getInstruction());
             if(commandToken->isBackpatchingNeeded()){
-                Relocation relocation = Relocation(currentSection->getCurrentPosition()-2, 0, this->currentSectionIndex);
-                this->relocationTable.push_back(relocation);
+                //Relocation relocation = Relocation(currentSection->getCurrentPosition()-2, 0, this->currentSectionIndex);
+                //this->relocationTable.push_back(relocation);
+                //get symbol or literal from operand
             }
         }
         currentSection->incPosition(token->getSize());

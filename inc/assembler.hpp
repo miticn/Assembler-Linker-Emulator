@@ -8,6 +8,7 @@
 #include "relocation.hpp"
 #include "token.hpp"
 #include <list>
+#include <unordered_set>
 
 class Assembler{
 private:
@@ -17,6 +18,7 @@ private:
     vector<Relocation> relocationTable;
     Section *currentSection = nullptr;
     uint32_t currentSectionIndex = 0;
+    unordered_set<string> relocatableSymbols;
 
 public:
     static list<Token*> tokenList;

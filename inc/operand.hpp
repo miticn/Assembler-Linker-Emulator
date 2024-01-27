@@ -5,15 +5,19 @@
 #include <iostream>
 using namespace std;
 
-struct OperandJump{
+struct Operand{
+    uint32_t literal;
+    char* symbol;
+};
+
+struct OperandJump : public Operand{
     enum OperandJumpType{
         LITERAL,
         SYMBOL
     };
     OperandJumpType type;
-    int literal;
-    char* symbol;
-    OperandJump(int literal){
+    
+    OperandJump(uint32_t literal){
         this->type = LITERAL;
         this->literal = literal;
         this->symbol = NULL;
@@ -26,9 +30,7 @@ struct OperandJump{
     OperandJump(){}
 };
 
-typedef struct OperandJump OperandJump;
-
-struct OperandData{
+struct OperandData : public Operand{
     enum OperandDataType{
         LITERAL_VALUE,          // $<literal> - value <literal>
         SYMBOL_VALUE,           // $<symbol> - value <symbol>
@@ -40,8 +42,6 @@ struct OperandData{
         MEMORY_REGISTER_OFFSET_SYMBOL    // [%<reg> + <symbol>] - value from memory at address <reg> + <symbol>
     };
     OperandDataType type;
-    uint32_t literal;
-    char* symbol;
     uint8_t reg;
     bool isBackpatchingNeeded;
     OperandData(OperandDataType type, uint32_t literal, char* symbol, uint8_t reg){
