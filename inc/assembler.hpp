@@ -13,9 +13,10 @@ class Assembler{
 private:
     
     Symbol_table symtab;
-    list<Section> sections;
+    vector<Section> sections;
     vector<Relocation> relocationTable;
     Section *currentSection = nullptr;
+    uint32_t currentSectionIndex = 0;
 
 public:
     static list<Token*> tokenList;

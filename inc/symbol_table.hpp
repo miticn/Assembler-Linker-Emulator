@@ -26,10 +26,11 @@ private:
     vector<Symbol> symbols;
     uint32_t insert_section_index;
 public:
-    Symbol_table(): insert_section_index(0) {}
-    void addSection(const string& name){
+    Symbol_table(): insert_section_index(1) {symbols.push_back(Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, "UND", 0));}
+    Symbol* addSection(const string& name){
         symbols.insert(symbols.begin() + insert_section_index, Symbol(0, Symbol::Type::SECTION, Symbol::Bind::LOCAL, name, insert_section_index));
         insert_section_index++;
+        return &symbols[insert_section_index - 1];
     }
     void addSymbol(const string& name){
         symbols.push_back(Symbol(0, Symbol::Type::SECTION, Symbol::Bind::LOCAL, name, insert_section_index));

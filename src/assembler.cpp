@@ -51,7 +51,7 @@ void Assembler::firstPass() {
             uint32_t section_index = 0;
             Symbol *symbolInTable = this->symtab.findSymbol(labelToken->getName());
             if (symbolInTable) {
-                if (symbolInTable->section_index == -1){
+                if (symbolInTable->section_index == 0){
                     symbolInTable->section_index = section_index;
                     symbolInTable->value = currentSection->getCurrentPosition();
                 }
@@ -66,14 +66,15 @@ void Assembler::firstPass() {
             DirectiveToken *directiveToken = (DirectiveToken*)token;
             if(directiveToken->getName()=="section"){
                 SectionDirectiveToken *sectionToken = (SectionDirectiveToken*)token;
-                sectionToken->getSectionName();
+                this->currentSectionIndex = (this->symtab.addSection(sectionToken->getSectionName()))->section_index;
                 this->sections.push_back(Section(sectionToken->getSectionName()));
+                this->currentSection = &sections[currentSectionIndex];
             }
             else if(directiveToken->getName()=="extern"){
                 ExternDirectiveToken *externToken = (ExternDirectiveToken*)token;
                 Symbol *symbolInTable = this->symtab.findSymbol(externToken->getSymbolName());
                 if (symbolInTable == nullptr) {
-                    uint32_t section_index = -1;
+                    uint32_t section_index = 0;
                     Symbol symbol = Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::GLOBAL, externToken->getSymbolName(), section_index);
                     symbol.externDirective = true;
                     this->symtab.addSymbol(symbol);
@@ -86,7 +87,7 @@ void Assembler::firstPass() {
                 GlobalDirectiveToken *globalToken = (GlobalDirectiveToken*)token;
                 Symbol *symbolInTable = this->symtab.findSymbol(globalToken->getSymbolName());
                 if (symbolInTable == nullptr) {
-                    uint32_t section_index = -1;
+                    uint32_t section_index = 0;
                     Symbol symbol = Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::GLOBAL, globalToken->getSymbolName(), section_index);
                     symbol.globalDirective = true;
                     this->symtab.addSymbol(symbol);
@@ -101,7 +102,7 @@ void Assembler::firstPass() {
                 uint32_t section_index = 0;
                 Symbol *symbolInTable = this->symtab.findSymbol(equToken->getName());
                 if (symbolInTable) {
-                    if (symbolInTable->section_index == -1){
+                    if (symbolInTable->section_index == 0){
                         symbolInTable->section_index = section_index;
                         symbolInTable->value = equToken->getValue();
                     }
@@ -118,7 +119,6 @@ void Assembler::firstPass() {
         } 
         currentSection->incPosition(token->getSize());
     }
-    
 }
 
 void Assembler::secondPass() {
