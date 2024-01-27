@@ -17,7 +17,8 @@ struct Symbol{
     bool globalDirective;
     bool externDirective;
 
-    Symbol(uint32_t value, Type type, Bind bind, const string& name, uint32_t section_index) : value(value), type(type), bind(bind), name(name), section_index(section_index) {}
+    Symbol(uint32_t value, Type type, Bind bind, const string& name, uint32_t section_index) 
+    : value(value), type(type), bind(bind), name(name), section_index(section_index) {}
 };
 
 
@@ -32,6 +33,16 @@ public:
         insert_section_index++;
         return &symbols[insert_section_index - 1];
     }
+
+    uint32_t getSymbolIndex(const string& name){
+        for (uint32_t i = 0; i < symbols.size(); i++) {
+            if (symbols[i].name == name) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
     void addSymbol(const string& name){
         symbols.push_back(Symbol(0, Symbol::Type::SECTION, Symbol::Bind::LOCAL, name, insert_section_index));
     }

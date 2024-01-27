@@ -1,12 +1,18 @@
 #include "../inc/literal_pool.hpp"
 
 void LiteralPool::addSymbol(const string& name, uint32_t value) {
+    if (poolMapSymbol.find(name) != poolMapSymbol.end()) {
+        return;
+    }
     poolMapSymbol[name] = this->poolOffset;
     pool.push_back(value);
     this->poolOffset += 4;
 }
 
 void LiteralPool::addLiteral(uint32_t value) {
+    if (poolMapLiteral.find(value) != poolMapLiteral.end()) {
+        return;
+    }
     poolMapLiteral[value] = this->poolOffset;
     pool.push_back(value);
     this->poolOffset += 4;

@@ -48,7 +48,7 @@ void Assembler::firstPass() {
     for (auto token : tokenList) {
         if (token->getType() == TokenType::LABEL) {
             LabelToken *labelToken = (LabelToken*)token;
-            uint32_t section_index = 0;
+            uint32_t section_index = this->currentSectionIndex;
             Symbol *symbolInTable = this->symtab.findSymbol(labelToken->getName());
             if (symbolInTable) {
                 if (symbolInTable->section_index == 0){
@@ -99,7 +99,7 @@ void Assembler::firstPass() {
             }
             else if(directiveToken->getName()=="equ"){
                 EquDirectiveToken *equToken = (EquDirectiveToken*)token;
-                uint32_t section_index = 0;
+                uint32_t section_index = this->currentSectionIndex;
                 Symbol *symbolInTable = this->symtab.findSymbol(equToken->getName());
                 if (symbolInTable) {
                     if (symbolInTable->section_index == 0){
@@ -132,14 +132,49 @@ void Assembler::secondPass() {
             DirectiveToken *directiveToken = (DirectiveToken*)token;
             if(directiveToken->getName()=="section"){
                 SectionDirectiveToken *sectionToken = (SectionDirectiveToken*)token;
+                this->currentSectionIndex = (this->symtab.findSymbol(sectionToken->getSectionName()))->section_index;
+                this->currentSection = &sections[currentSectionIndex];
 
-            }//add other directives that generate data
+            } else if(directiveToken->getName()=="word"){
+                WordDirectiveToken *wordToken = (WordDirectiveToken*)token;
+                if(wordToken->isBackpatchingNeeded()){
+                    //symbol
+                    Symbol *symbolInTable = this->symtab.findSymbol(wordToken->getSymbol());
+                    if(symbolInTable == nullptr){
+                        cout << "Error: Symbol " << wordToken->getSymbol() << " not defined" << endl;
+                    } else if (symbolInTable->section_index == 0){
+                        //needs realocation
+                    } else{
+                        //no realocation
+                        currentSection->add4Bytes(symbolInTable->value);
+                    }
+                } else{
+                    //literal
+                    currentSection->add4Bytes(wordToken->getValue());
+                }
+
+            } else if(directiveToken->getName() == "skip"){
+                SkipDirectiveToken *skipToken = (SkipDirectiveToken*)token;
+                for(int i = 0; i < skipToken->getSize(); i++){
+                    currentSection->addByte(0);
+                }
+
+            } else if(directiveToken->getName() == "ascii"){
+                AsciiDirectiveToken *asciiToken = (AsciiDirectiveToken*)token;
+                for(auto c : asciiToken->getAsciiString()){
+                    currentSection->addByte(c);
+                }
+            }
             else if(directiveToken->getName()=="end"){
                 return;
             }  
         } else if(token->getType() == TokenType::COMMAND){
             CommandToken *commandToken = (CommandToken*)token;
-            
+            currentSection->add4Bytes(commandToken->getInstruction());
+            if(commandToken->isBackpatchingNeeded()){
+                Relocation relocation = Relocation(currentSection->getCurrentPosition()-2, 0, this->currentSectionIndex);
+                this->relocationTable.push_back(relocation);
+            }
         }
         currentSection->incPosition(token->getSize());
     }

@@ -14,6 +14,9 @@ struct Token{
     virtual uint32_t getSize() = 0;
     virtual TokenType getType() = 0;
     virtual string getName() = 0;
+    virtual bool isBackpatchingNeeded(){
+        return false;
+    }
 };
 
 struct LabelToken : public Token{
@@ -62,13 +65,17 @@ struct WordDirectiveToken : public DirectiveToken{
     uint32_t getSize() override {
         return 4;
     }
+    bool isBackpatchingNeeded() override {
+        return backpatch;
+    }
     uint32_t value;
     char *symbol;
-    bool isBackpatchingNeeded;
+    bool backpatch;
     string getName(){ return "word"; }
     uint32_t getValue(){ return value; }
-    WordDirectiveToken(uint32_t value, char * symbol = nullptr, bool isBackpatchingNeeded = false)
-        : value(value), symbol(symbol), isBackpatchingNeeded(isBackpatchingNeeded) {}
+    string getSymbol(){ return symbol; }
+    WordDirectiveToken(uint32_t value, char * symbol = nullptr, bool backpatch = false)
+        : value(value), symbol(symbol), backpatch(backpatch) {}
 };
 
 struct SkipDirectiveToken : public DirectiveToken{
@@ -87,6 +94,7 @@ struct AsciiDirectiveToken : public DirectiveToken{
     uint32_t getSize() override {
         return strlen(str);
     }
+    string getAsciiString(){ return str; }
 };
 
 struct EquDirectiveToken : public DirectiveToken{
@@ -361,6 +369,9 @@ struct PopStatusCommandToken : public CommandToken{
 
 struct JumpCommandToken : public CommandToken{
     OperandJump operand;
+    bool isBackpatchingNeeded() override {
+        return true;
+    }
 };
 
 struct JmpCommandToken : public JumpCommandToken{
@@ -432,6 +443,9 @@ struct CallCommandToken : public JumpCommandToken{
 
 struct LdCommandToken : public CommandToken{
     OperandData operand;
+    bool isBackpatchingNeeded() override {
+        return operand.isBackpatchingNeeded;
+    }
     string getName() override {
         return "ld";
     }
@@ -497,6 +511,9 @@ struct StCommandToken : public CommandToken{
     OperandData operand;
     string getName() override {
         return "st";
+    }
+    bool isBackpatchingNeeded() override {
+        return operand.isBackpatchingNeeded;
     }
     StCommandToken(uint8_t reg1, OperandData operand) : operand(operand){
         this->oc = 0b1000;
