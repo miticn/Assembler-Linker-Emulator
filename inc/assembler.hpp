@@ -30,6 +30,9 @@ private:
     void updateCurrentSectionPosition(Token* token);
 
 public:
+    Assembler(){
+        sections.push_back(Section("UND"));
+    }
     static list<Token*> tokenList;
     void assemble(char *inputFileName, char *outputFileName);
     void firstPass();

@@ -29,6 +29,7 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
 
     printTokenList();
 
+    this->symtab.printSymbolTable();
     firstPass();
     cout<<"First pass done"<<endl;
     this->symtab.printSymbolTable();
@@ -62,7 +63,9 @@ void Assembler::firstPass() {
         }
 
         // Update the current section position
+        this->symtab.printSymbolTable();
         updateCurrentSectionPosition(token);
+        this->symtab.printSymbolTable();
     }
 }
 
@@ -121,7 +124,8 @@ void Assembler::processExternDirectiveTokenFirstPass(ExternDirectiveToken* exter
         symbol.externDirective = true;
         symtab.addSymbol(symbol);
     } else {
-        updateSymbolForDirective(symbolIndex);
+        symtab.symbols[symbolIndex].bind = Symbol::Bind::GLOBAL;
+        symtab.symbols[symbolIndex].externDirective = true;
     }
 }
 
@@ -133,7 +137,8 @@ void Assembler::processGlobalDirectiveTokenFirstPass(GlobalDirectiveToken* globa
         symbol.globalDirective = true;
         symtab.addSymbol(symbol);
     } else {
-        updateSymbolForDirective(symbolIndex);
+        symtab.symbols[symbolIndex].bind = Symbol::Bind::GLOBAL;
+        symtab.symbols[symbolIndex].globalDirective = true;
     }
 }
 
@@ -152,12 +157,6 @@ void Assembler::processEquDirectiveTokenFirstPass(EquDirectiveToken* equToken) {
         Symbol symbol = Symbol(equToken->getValue(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, equToken->getName(), sectionIndex);
         symtab.addSymbol(symbol);
     }
-}
-
-void Assembler::updateSymbolForDirective(uint32_t symbolIndex) {
-    // Update symbol properties for directives encountered during the first pass
-    symtab.symbols[symbolIndex].bind = Symbol::Bind::GLOBAL;
-    symtab.symbols[symbolIndex].externDirective = true;
 }
 
 void Assembler::updateCurrentSectionPosition(Token* token) {

@@ -28,20 +28,11 @@ private:
 public:
     vector<Symbol> symbols;
     Symbol_table(): insert_section_index(1) {
-        symbols.push_back(Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, string("example"), 0));
+        symbols = {Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, string("example"), 0)};
     }
     void addSection(const string& name){
         symbols.insert(symbols.begin() + insert_section_index, Symbol(0, Symbol::Type::SECTION, Symbol::Bind::LOCAL, name, insert_section_index));
         insert_section_index++;
-    }
-
-    uint32_t getSymbolIndex(const string& name){
-        for (uint32_t i = 0; i < symbols.size(); i++) {
-            if (symbols[i].name == name) {
-                return i;
-            }
-        }
-        return 0;
     }
 
     uint32_t findSymbolIndex(const string& name){
@@ -55,15 +46,6 @@ public:
     
     void addSymbol(const Symbol &symbol){
         symbols.push_back(symbol);
-    }
-
-    bool symbolExists(const string& name) {
-        for (auto& symbol : symbols) {
-            if (symbol.name == name) {
-                return true;
-            }
-        }
-        return false;
     }
 
     void printSymbolTable() {

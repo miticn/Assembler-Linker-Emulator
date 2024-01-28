@@ -15,11 +15,14 @@ public:
     LiteralPool literal_pool;
     vector<Relocation> relocationTable;
     
-    Section(const string &name){this->name = name; size = 0; current_position = 0;}
+    Section(const string &name){this->name = name; size = 0; current_position = 0; data = {};}
     uint32_t getSize() const { return size; }
     uint32_t getCurrentPosition() const { return current_position; }
     void resetPosition() { current_position = 0;}
-    void incPosition(uint32_t inc) { current_position += inc; }
+    void incPosition(uint32_t inc) { 
+        current_position += inc;
+        if (current_position > size) size = current_position;
+    }
     void addByte(uint8_t byte) { data.push_back(byte); size++; current_position++; }
     void add4Bytes(uint32_t word) { 
         data.push_back(word >> 24);
