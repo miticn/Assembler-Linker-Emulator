@@ -29,6 +29,20 @@ private:
     void updateSymbolForDirective(uint32_t symbolIndex);
     void updateCurrentSectionPosition(Token* token);
 
+
+
+
+    void resetSectionPositions();
+    void processDirectiveTokenSecondPass(Token* token);
+    void processSectionDirectiveSecondPass(Token* token);
+    void processWordDirectiveSecondPass(Token* token);
+    void processBackpatchingForWordSecondPass(WordDirectiveToken* wordToken);
+    void processSkipDirectiveSecondPass(Token* token);
+    void processAsciiDirectiveSecondPass(Token* token);
+    void processCommandTokenSecondPass(Token* token);
+    void processDataBackpatchingSecondPass(Token* token);
+
+
 public:
     Assembler(){
         sections.push_back(Section("UND"));

@@ -33,7 +33,7 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
     firstPass();
     cout<<"First pass done"<<endl;
     this->symtab.printSymbolTable();
-    //secondPass();
+    secondPass();
 }
 
 void Assembler::printTokenList() {
@@ -63,9 +63,7 @@ void Assembler::firstPass() {
         }
 
         // Update the current section position
-        this->symtab.printSymbolTable();
         updateCurrentSectionPosition(token);
-        this->symtab.printSymbolTable();
     }
 }
 
@@ -165,88 +163,106 @@ void Assembler::updateCurrentSectionPosition(Token* token) {
         sections[currentSectionIndex].incPosition(token->getSize());
 }
 
-/*
+//****************SECOND PASS*****************//
 void Assembler::secondPass() {
-    this->currentSection = nullptr;
-    for(auto &section : this->sections){
-        section.resetPosition();
-    }
+    resetSectionPositions();
 
     for (auto token : tokenList) {
         if (token->getType() == TokenType::DIRECTIVE) {
-            DirectiveToken *directiveToken = (DirectiveToken*)token;
-            if(directiveToken->getName()=="section"){
-                SectionDirectiveToken *sectionToken = (SectionDirectiveToken*)token;
-                this->currentSectionIndex = symtab.findSymbolIndex(sectionToken->getSectionName());
-                this->sections.push_back(Section(sectionToken->getSectionName()));
-                this->currentSection = &sections[currentSectionIndex];
-
-            } else if(directiveToken->getName()=="word"){
-                WordDirectiveToken *wordToken = (WordDirectiveToken*)token;
-                if(wordToken->isBackpatchingNeeded()){
-                    //symbol
-                    uint32_t symbolIndex = this->symtab.findSymbolIndex(wordToken->getSymbol());
-                    if(symbolIndex == 0){
-                        cout << "Error: Symbol " << wordToken->getSymbol() << " not defined" << endl;
-                    } else if (symtab.symbols[symbolIndex].section_index == 0){
-                        //needs realocation
-                        currentSection->add4Bytes(0);
-                    } else{
-                        currentSection->add4Bytes(symtab.symbols[symbolIndex].value);
-                        if(this->relocatableSymbols.find(symtab.symbols[symbolIndex].name) != this->relocatableSymbols.end()){
-                            Relocation relocation = Relocation(currentSection->getCurrentPosition()-4, 0, this->currentSectionIndex);
-                            this->currentSection->relocationTable.push_back(relocation);
-                        }
-
-                    }
-                } else{
-                    //literal
-                    currentSection->add4Bytes(wordToken->getValue());
-                }
-
-            } else if(directiveToken->getName() == "skip"){
-                SkipDirectiveToken *skipToken = (SkipDirectiveToken*)token;
-                for(int i = 0; i < skipToken->getSize(); i++){
-                    currentSection->addByte(0);
-                }
-
-            } else if(directiveToken->getName() == "ascii"){
-                AsciiDirectiveToken *asciiToken = (AsciiDirectiveToken*)token;
-                for(auto c : asciiToken->getAsciiString()){
-                    currentSection->addByte(c);
-                }
-            }
-            else if(directiveToken->getName()=="end"){
-                return;
-            }  
-        } else if(token->getType() == TokenType::COMMAND){
-            CommandToken *commandToken = (CommandToken*)token;
-            currentSection->add4Bytes(commandToken->getInstruction());
-            if(commandToken->isBackpatchingNeeded()){
-                //check if operand has literal or symbol
-                DataCommandToken *dataCommandToken = (DataCommandToken*)token;
-                Operand *operand = dataCommandToken->getOperandPtr();
-                if(operand->hasLiteral()){
-
-                }else if (operand->hasSymbol()){
-                    if(this->relocatableSymbols.find(operand->symbol) != this->relocatableSymbols.end()){
-                        //this->relocationTable.push_back(relocation);
-                    }
-
-                }else{
-                    cout << "Error: Operand has no literal or symbol, can't be backpatched" << endl;
-                }
-                
-
-                
-                
-            }
+            processDirectiveTokenSecondPass(token);
+        } else if (token->getType() == TokenType::COMMAND) {
+            processCommandTokenSecondPass(token);
         }
-        if (currentSection != nullptr)
-            currentSection->incPosition(token->getSize());
+        updateCurrentSectionPosition(token);
     }
-    
-}*/
+}
+
+void Assembler::processDirectiveTokenSecondPass(Token* token) {
+    DirectiveToken* directiveToken = (DirectiveToken*)token;
+    if (directiveToken->getName() == "section") {
+        processSectionDirectiveSecondPass(token);
+    } else if (directiveToken->getName() == "word") {
+        processWordDirectiveSecondPass(token);
+    } else if (directiveToken->getName() == "skip") {
+        processSkipDirectiveSecondPass(token);
+    } else if (directiveToken->getName() == "ascii") {
+        processAsciiDirectiveSecondPass(token);
+    } else if (directiveToken->getName() == "end") {
+        return;
+    }
+}
+
+void Assembler::processSectionDirectiveSecondPass(Token* token) {
+    SectionDirectiveToken* sectionToken = (SectionDirectiveToken*)token;
+    this->currentSectionIndex = symtab.findSymbolIndex(sectionToken->getSectionName());
+}
+
+void Assembler::processWordDirectiveSecondPass(Token* token) {
+    WordDirectiveToken* wordToken = (WordDirectiveToken*)token;
+    if (wordToken->isBackpatchingNeeded()) {
+        processBackpatchingForWordSecondPass(wordToken);
+    } else {
+        sections[currentSectionIndex].add4Bytes(wordToken->getValue());
+    }
+}
+
+void Assembler::processBackpatchingForWordSecondPass(WordDirectiveToken* wordToken) {
+    uint32_t symbolIndex = this->symtab.findSymbolIndex(wordToken->getSymbol());
+    if (symbolIndex == 0) {
+        cout << "Error: Symbol " << wordToken->getSymbol() << " not defined" << endl;
+    } else if (symtab.symbols[symbolIndex].section_index == 0) {
+        sections[currentSectionIndex].add4Bytes(0);
+    } else {
+        sections[currentSectionIndex].add4Bytes(symtab.symbols[symbolIndex].value);
+        if (this->relocatableSymbols.find(symtab.symbols[symbolIndex].name) != this->relocatableSymbols.end()) {
+            Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition() - 4, 0, this->currentSectionIndex);
+            sections[currentSectionIndex].relocationTable.push_back(relocation);
+        }
+    }
+}
+
+void Assembler::processSkipDirectiveSecondPass(Token* token) {
+    SkipDirectiveToken* skipToken = (SkipDirectiveToken*)token;
+    for (int i = 0; i < skipToken->getSize(); i++) {
+        sections[currentSectionIndex].addByte(0);
+    }
+}
+
+void Assembler::processAsciiDirectiveSecondPass(Token* token) {
+    AsciiDirectiveToken* asciiToken = (AsciiDirectiveToken*)token;
+    for (auto c : asciiToken->getAsciiString()) {
+        sections[currentSectionIndex].addByte(c);
+    }
+}
+
+void Assembler::processCommandTokenSecondPass(Token* token) {
+    CommandToken* commandToken = (CommandToken*)token;
+    sections[currentSectionIndex].add4Bytes(commandToken->getInstruction());
+    if (commandToken->isBackpatchingNeeded()) {
+        processDataBackpatchingSecondPass(token);
+    }
+}
+
+void Assembler::processDataBackpatchingSecondPass(Token* token) {
+    DataCommandToken* dataCommandToken = (DataCommandToken*)token;
+    Operand* operand = dataCommandToken->getOperandPtr();
+    if (operand->hasLiteral()) {
+        // Handle literal backpatching
+    } else if (operand->hasSymbol()) {
+        if (this->relocatableSymbols.find(operand->symbol) != this->relocatableSymbols.end()) {
+            // Handle symbol backpatching
+        }
+    } else {
+        cout << "Error: Operand has no literal or symbol, can't be backpatched" << endl;
+    }
+}
+
+void Assembler::resetSectionPositions() {
+    this->currentSectionIndex = 0;
+    for (auto &section : this->sections) {
+        section.resetPosition();
+    }
+}
 
 int main(int argc, char *argv[]) {
     Assembler assembler;
