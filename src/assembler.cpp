@@ -43,10 +43,9 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
 
     // Write the data to the output file
     for (auto &section : this->sections) {
-        //cout secitons
-        cout << "Section: " << section.getName() << endl;
-        fwrite(section.data.data(), sizeof(uint8_t), section.data.size(), outputFile);
+        section.mergeSectionAndPool();
     }
+    // Need to write Symbol table, Section(data, relocation table)
 }
 
 void Assembler::printTokenList() {

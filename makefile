@@ -17,8 +17,13 @@ flex: bison
 bison:
 	bison -d misc/bison.y
 
+
+serialization_test:
+	g++ -g src/setialization_test.cpp src/literal_pool.cpp src/section.cpp src/realocation.cpp -o ser_test
+
 clean:
 	rm -f misc/flex.yy.c misc/flex misc/flex.cpp misc/flex.hpp
 	rm -f misc/bison.tab.c misc/bison.tab.h misc/bison misc/bison.cpp misc/bison.hpp
 	rm -f src/assembler src/emulator src/linker
+	rm -f ser_test
 	
