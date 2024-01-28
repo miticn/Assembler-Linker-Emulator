@@ -4,7 +4,7 @@ void LiteralPool::addSymbol(const string& name, uint32_t value) {
     if (poolMapSymbol.find(name) != poolMapSymbol.end()) {
         return;
     }
-    poolMapSymbol[name] = this->poolOffset;
+    poolMapSymbol[name] = this->offsetFromStartOfPool;
     
     pool.push_back(value >> 24);
     pool.push_back(value >> 16);
@@ -12,19 +12,19 @@ void LiteralPool::addSymbol(const string& name, uint32_t value) {
     pool.push_back(value);
 
 
-    this->poolOffset += 4;
+    this->offsetFromStartOfPool += 4;
 }
 
 void LiteralPool::addLiteral(uint32_t value) {
     if (poolMapLiteral.find(value) != poolMapLiteral.end()) {
         return;
     }
-    poolMapLiteral[value] = this->poolOffset;
+    poolMapLiteral[value] = this->offsetFromStartOfPool;
     pool.push_back(value >> 24);
     pool.push_back(value >> 16);
     pool.push_back(value >> 8);
     pool.push_back(value);
-    this->poolOffset += 4;
+    this->offsetFromStartOfPool += 4;
 }
 
 uint32_t LiteralPool::getSymbolOffset(const string& name) {

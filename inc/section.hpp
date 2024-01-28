@@ -8,7 +8,7 @@ using namespace std;
 class Section{
 private:
     string name;
-    uint32_t size, current_position;
+    uint32_t current_position;
     
     
 public:
@@ -16,21 +16,20 @@ public:
     LiteralPool literal_pool;
     vector<Relocation> relocationTable;
     
-    Section(const string &name){this->name = name; size = 0; current_position = 0; data = {};}
-    uint32_t getSize() const { return size; }
+    Section(const string &name){this->name = name; current_position = 0; data = {};}
+    uint32_t getSize() const { return data.size(); }
     uint32_t getCurrentPosition() const { return current_position; }
     void resetPosition() { current_position = 0;}
     void incPosition(uint32_t inc) { 
         current_position += inc;
-        if (current_position > size) size = current_position;
+        if (current_position > data.size()) data.resize(current_position);
     }
-    void addByte(uint8_t byte) { data.push_back(byte); size++; current_position++; }
+    void addByte(uint8_t byte) { data[current_position++] = byte; }
     void add4Bytes(uint32_t word) { 
-        data.push_back(word >> 24);
-        data.push_back(word >> 16); 
-        data.push_back(word >> 8); 
-        data.push_back(word); size += 4; 
-        current_position += 4; 
+        data[current_position++] = (word >> 24);
+        data[current_position++] = (word >> 16); 
+        data[current_position++] = (word >> 8); 
+        data[current_position++] = (word);
     }
     string getName() const { return name; }
 
@@ -38,7 +37,6 @@ public:
         size_t originalDataSize = data.size();
         data.resize(originalDataSize + literal_pool.pool.size());
         std::copy(literal_pool.pool.begin(), literal_pool.pool.end(), data.begin() + originalDataSize);
-        size += literal_pool.pool.size();
     }
 
 
@@ -49,7 +47,6 @@ public:
         stream.write(name.c_str(), nameSize);
 
         // Serialize size and current_position
-        stream.write(reinterpret_cast<const char*>(&size), sizeof(uint32_t));
         stream.write(reinterpret_cast<const char*>(&current_position), sizeof(uint32_t));
 
         // Serialize data
@@ -80,7 +77,6 @@ public:
         delete[] nameBuffer;
 
         // Deserialize size and current_position
-        stream.read(reinterpret_cast<char*>(&size), sizeof(uint32_t));
         stream.read(reinterpret_cast<char*>(&current_position), sizeof(uint32_t));
 
         // Deserialize data

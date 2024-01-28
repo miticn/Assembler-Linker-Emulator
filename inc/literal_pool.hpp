@@ -12,7 +12,7 @@ using namespace std;
 class LiteralPool {
     unordered_map<uint32_t, uint32_t> poolMapLiteral;
     unordered_map<string, uint32_t> poolMapSymbol;
-    uint32_t poolOffset = 0;
+    uint32_t offsetFromStartOfPool = 0;
 public:
     vector<uint8_t> pool;
     void addSymbol(const string& name, uint32_t value);
@@ -22,7 +22,7 @@ public:
     uint32_t getLiteralOffset(uint32_t value);
     uint32_t getSize();
 
-        void serialize(std::ostream& stream) const {
+    void serialize(std::ostream& stream) const {
         // Serialize poolMapLiteral size and entries
         uint32_t mapLiteralSize = poolMapLiteral.size();
         stream.write(reinterpret_cast<const char*>(&mapLiteralSize), sizeof(uint32_t));
@@ -41,8 +41,8 @@ public:
             stream.write(reinterpret_cast<const char*>(&entry.second), sizeof(uint32_t));
         }
 
-        // Serialize poolOffset
-        stream.write(reinterpret_cast<const char*>(&poolOffset), sizeof(uint32_t));
+        // Serialize offsetFromStartOfPool
+        stream.write(reinterpret_cast<const char*>(&offsetFromStartOfPool), sizeof(uint32_t));
 
         // Serialize pool size and content
         uint32_t poolSize = pool.size();
@@ -79,8 +79,8 @@ public:
             poolMapSymbol[name] = value;
         }
 
-        // Deserialize poolOffset
-        stream.read(reinterpret_cast<char*>(&poolOffset), sizeof(uint32_t));
+        // Deserialize offsetFromStartOfPool
+        stream.read(reinterpret_cast<char*>(&offsetFromStartOfPool), sizeof(uint32_t));
 
         // Deserialize pool
         uint32_t poolSize;

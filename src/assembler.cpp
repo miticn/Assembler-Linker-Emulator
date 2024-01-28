@@ -12,7 +12,7 @@
 using namespace std;
 
 using namespace std;
-//initialise
+
 list<Token*> Assembler::tokenList;
 
 void Assembler::assemble(char *inputFileName, char *outputFileName) {
@@ -34,11 +34,6 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
     cout<<"First pass done"<<endl;
     this->symtab.printSymbolTable();
     secondPass();
-
-    // Write the data to the output file
-    for (auto &section : this->sections) {
-        section.mergeSectionAndPool();
-    }
     
     std::ofstream outFile(outputFileName, std::ios::binary);
     //write string for object file
@@ -83,29 +78,23 @@ void Assembler::firstPass() {
 }
 
 void Assembler::processLabelTokenFirstPass(LabelToken* labelToken) {
-    // Process label tokens encountered during the first pass
-    uint32_t sectionIndex = currentSectionIndex;
     uint32_t symbolIndex = symtab.findSymbolIndex(labelToken->getLabelName());
 
-    if (symbolIndex != 0) {
-        processExistingSymbolFirstPass(symbolIndex, labelToken, sectionIndex);
-    } else {
-        // Add a new symbol if not found
-        Symbol symbol = Symbol(sections[currentSectionIndex].getCurrentPosition(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, labelToken->getName(), sectionIndex);
-        symtab.addSymbol(symbol);
-    }
-}
-
-void Assembler::processExistingSymbolFirstPass(uint32_t symbolIndex, LabelToken* labelToken, uint32_t sectionIndex) {
-    // Process existing symbols encountered during the first pass
-    if (symtab.symbols[symbolIndex].section_index == 0) {
-        symtab.symbols[symbolIndex].section_index = sectionIndex;
-        symtab.symbols[symbolIndex].value = sections[currentSectionIndex].getCurrentPosition();
-        relocatableSymbols.insert(labelToken->getLabelName());
-    } else {
+    if (symbolIndex != 0 && symtab.symbols[symbolIndex].section_index != 0) {
+        // Symbol already defined
         cout << "Error: Symbol " << labelToken->getLabelName() << " already defined" << endl;
         exit(1);
     }
+    if (symbolIndex == 0) {
+        // Add a new symbol if not found
+        Symbol symbol = Symbol(sections[currentSectionIndex].getCurrentPosition(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, labelToken->getName(), currentSectionIndex);
+        symtab.addSymbol(symbol);
+    } else {
+        // Update existing symbol
+        symtab.symbols[symbolIndex].section_index = currentSectionIndex;
+        symtab.symbols[symbolIndex].value = sections[currentSectionIndex].getCurrentPosition();
+    }
+    relocatableSymbols.insert(labelToken->getLabelName());
 }
 
 void Assembler::processDirectiveTokenFirstPass(DirectiveToken* directiveToken) {
@@ -158,18 +147,15 @@ void Assembler::processGlobalDirectiveTokenFirstPass(GlobalDirectiveToken* globa
 
 void Assembler::processEquDirectiveTokenFirstPass(EquDirectiveToken* equToken) {
     // Process equ directive tokens encountered during the first pass
-    uint32_t sectionIndex = currentSectionIndex;
     uint32_t symbolIndex = symtab.findSymbolIndex(equToken->getSymbolName());
-    if (symbolIndex) {
-        if (symtab.symbols[symbolIndex].section_index == 0) {
-            symtab.symbols[symbolIndex].section_index = sectionIndex;
-            symtab.symbols[symbolIndex].value = equToken->getValue();
-        } else {
-            cout << "Error: Symbol " << equToken->getName() << " already defined" << endl;
-            exit(1);
-        }
+    if (symbolIndex==0 && symtab.symbols[symbolIndex].section_index == 0) {
+        symtab.symbols[symbolIndex].section_index = currentSectionIndex;
+        symtab.symbols[symbolIndex].value = equToken->getValue();
+    } else if (symbolIndex==0 && symtab.symbols[symbolIndex].section_index != 0) {
+        cout << "Error: Symbol " << equToken->getName() << " already defined" << endl;
+        exit(1);
     } else {
-        Symbol symbol = Symbol(equToken->getValue(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, equToken->getName(), sectionIndex);
+        Symbol symbol = Symbol(equToken->getValue(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, equToken->getName(), currentSectionIndex);
         symtab.addSymbol(symbol);
     }
 }
@@ -194,7 +180,7 @@ void Assembler::secondPass() {
     }
     //merge section and literal pool both are vectors
     for (auto &section : this->sections) {
-        section.data.insert(section.data.end(), section.literal_pool.pool.begin(), section.literal_pool.pool.end());
+        section.mergeSectionAndPool();
     }
 }
 
@@ -226,14 +212,12 @@ void Assembler::processWordDirectiveSecondPass(Token* token) {
         if (symbolIndex == 0) {
             cout << "Error: Symbol " << wordToken->getSymbol() << " not defined" << endl;
             exit(1);
-        } else if (symtab.symbols[symbolIndex].section_index == 0) {
+        } else if (symtab.symbols[symbolIndex].section_index == 0) { //is global and not defined
             sections[currentSectionIndex].add4Bytes(0);
-        } else {
+            Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition() - 4, symbolIndex, this->currentSectionIndex);
+            sections[currentSectionIndex].relocationTable.push_back(relocation);
+        } else { //is defined
             sections[currentSectionIndex].add4Bytes(symtab.symbols[symbolIndex].value);
-            if (this->relocatableSymbols.find(symtab.symbols[symbolIndex].name) != this->relocatableSymbols.end()) {
-                Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition() - 4, 0, this->currentSectionIndex);
-                sections[currentSectionIndex].relocationTable.push_back(relocation);
-            }
         }
     } else {
         //is literal
