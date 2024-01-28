@@ -1,9 +1,3 @@
-# file: isr_terminal.s
-
-.section isr
-# prekidna rutina za terminal
-.global isr_terminal
-isr_terminal:
-    ret
-  
-.end
+.section ok
+.extern ok2
+ret

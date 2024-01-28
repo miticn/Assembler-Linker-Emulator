@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include "relocation.hpp"
 #include "literal_pool.hpp"
 using namespace std;
 class Section{
@@ -12,6 +13,7 @@ private:
     
 public:
     LiteralPool literal_pool;
+    vector<Relocation> relocationTable;
     
     Section(const string &name){this->name = name; size = 0; current_position = 0;}
     uint32_t getSize() const { return size; }

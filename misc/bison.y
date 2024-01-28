@@ -107,30 +107,30 @@ directive: directive_global
     | directive_end
     ;
 
-directive_global : GLOBAL IDENTIFIER { Assembler::tokenList.push_back(new GlobalDirectiveToken($2));}
-    | directive_global COMMA IDENTIFIER { Assembler::tokenList.push_back(new GlobalDirectiveToken($3));}
+directive_global : GLOBAL IDENTIFIER { Assembler::tokenList.push_back(new GlobalDirectiveToken(string($2)));}
+    | directive_global COMMA IDENTIFIER { Assembler::tokenList.push_back(new GlobalDirectiveToken(string($3)));}
     ;
 
-directive_extern : EXTERN IDENTIFIER { Assembler::tokenList.push_back(new ExternDirectiveToken($2));}
-    | directive_extern COMMA IDENTIFIER { Assembler::tokenList.push_back(new ExternDirectiveToken($3));}
+directive_extern : EXTERN IDENTIFIER { Assembler::tokenList.push_back(new ExternDirectiveToken(string($2)));}
+    | directive_extern COMMA IDENTIFIER { Assembler::tokenList.push_back(new ExternDirectiveToken(string($3)));}
     ;
 
-directive_section : SECTION IDENTIFIER { Assembler::tokenList.push_back(new SectionDirectiveToken($2));}
+directive_section : SECTION IDENTIFIER { Assembler::tokenList.push_back(new SectionDirectiveToken(string($2)));}
     ;
 
 directive_word : WORD NUMBER { Assembler::tokenList.push_back(new WordDirectiveToken($2));}
-    | WORD IDENTIFIER { Assembler::tokenList.push_back(new WordDirectiveToken(0,$2,true));}
+    | WORD IDENTIFIER { Assembler::tokenList.push_back(new WordDirectiveToken(0,string($2),true));}
     | directive_word COMMA NUMBER { Assembler::tokenList.push_back(new WordDirectiveToken($3));}
-    | directive_word COMMA IDENTIFIER { Assembler::tokenList.push_back(new WordDirectiveToken(0,$3,true));}
+    | directive_word COMMA IDENTIFIER { Assembler::tokenList.push_back(new WordDirectiveToken(0,string($3),true));}
     ;
 
 directive_skip : SKIP NUMBER { Assembler::tokenList.push_back(new SkipDirectiveToken($2));}
     ;
 
-directive_ascii : ASCII STRING { Assembler::tokenList.push_back(new AsciiDirectiveToken($2));}
+directive_ascii : ASCII STRING { Assembler::tokenList.push_back(new AsciiDirectiveToken(string($2)));}
     ;
 
-directive_equ : EQU IDENTIFIER COMMA NUMBER { Assembler::tokenList.push_back(new EquDirectiveToken($2, $4));}
+directive_equ : EQU IDENTIFIER COMMA NUMBER { Assembler::tokenList.push_back(new EquDirectiveToken(string($2), $4));}
     ;
 
 directive_end : END { Assembler::tokenList.push_back(new EndDirectiveToken);}
@@ -161,45 +161,45 @@ command : HALT { Assembler::tokenList.push_back(new HaltCommandToken);}
     | CSRWR REGISTER COMMA CONTROL_REGISTER { Assembler::tokenList.push_back(new CsrwrCommandToken($2, $4));}
 
     | CALL NUMBER { Assembler::tokenList.push_back(new CallCommandToken(OperandJump($2))); }
-    | CALL IDENTIFIER { Assembler::tokenList.push_back(new CallCommandToken(OperandJump($2))); }
+    | CALL IDENTIFIER { Assembler::tokenList.push_back(new CallCommandToken(OperandJump(string($2)))); }
     | JMP NUMBER { Assembler::tokenList.push_back(new JmpCommandToken(OperandJump($2))); }
-    | JMP IDENTIFIER { Assembler::tokenList.push_back(new JmpCommandToken(OperandJump($2))); }
+    | JMP IDENTIFIER { Assembler::tokenList.push_back(new JmpCommandToken(OperandJump(string($2)))); }
     | BEQ REGISTER COMMA REGISTER COMMA NUMBER { Assembler::tokenList.push_back(new BeqCommandToken($2, $4, OperandJump($6))); }
-    | BEQ REGISTER COMMA REGISTER COMMA IDENTIFIER { Assembler::tokenList.push_back(new BeqCommandToken($2, $4, OperandJump($6))); }
+    | BEQ REGISTER COMMA REGISTER COMMA IDENTIFIER { Assembler::tokenList.push_back(new BeqCommandToken($2, $4, OperandJump(string($6)))); }
     | BNE REGISTER COMMA REGISTER COMMA NUMBER { Assembler::tokenList.push_back(new BneCommandToken($2, $4, OperandJump($6))); }
-    | BNE REGISTER COMMA REGISTER COMMA IDENTIFIER { Assembler::tokenList.push_back(new BneCommandToken($2, $4, OperandJump($6))); }
+    | BNE REGISTER COMMA REGISTER COMMA IDENTIFIER { Assembler::tokenList.push_back(new BneCommandToken($2, $4, OperandJump(string($6)))); }
     | BGT REGISTER COMMA REGISTER COMMA NUMBER { Assembler::tokenList.push_back(new BgtCommandToken($2, $4, OperandJump($6))); }
-    | BGT REGISTER COMMA REGISTER COMMA IDENTIFIER { Assembler::tokenList.push_back(new BgtCommandToken($2, $4, OperandJump($6))); }
+    | BGT REGISTER COMMA REGISTER COMMA IDENTIFIER { Assembler::tokenList.push_back(new BgtCommandToken($2, $4, OperandJump(string($6)))); }
     | ld_instuction
     | st_instuction
     ;
 
 ld_instuction: LD DOLLAR NUMBER COMMA REGISTER { 
-        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::LITERAL_VALUE, $3, nullptr, 0), $5)); 
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::LITERAL_VALUE, $3, "", 0), $5)); 
     }
     | LD DOLLAR IDENTIFIER COMMA REGISTER{ 
-        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::SYMBOL_VALUE, 0, $3, 0), $5)); 
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::SYMBOL_VALUE, 0, string($3), 0), $5)); 
     }
     | LD NUMBER COMMA REGISTER{
-        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::LITERAL_VALUE, $2, nullptr, 0), $4));
-        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, nullptr, $4), $4)); 
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::LITERAL_VALUE, $2, "", 0), $4));
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, "", $4), $4)); 
 
     }
     | LD IDENTIFIER COMMA REGISTER{
-        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::SYMBOL_VALUE, 0, $2, 0), $4));
-        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, nullptr, $4), $4)); 
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::SYMBOL_VALUE, 0, string($2), 0), $4));
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, "", $4), $4)); 
     }
     | LD REGISTER COMMA REGISTER{
-        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::REGISTER_VALUE, 0, nullptr, $2), $4)); 
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::REGISTER_VALUE, 0, "", $2), $4)); 
     }
     | LD LBRACKET REGISTER RBRACKET COMMA REGISTER{
-        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, nullptr, $3), $6)); 
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, "", $3), $6)); 
     }
     | LD LBRACKET REGISTER PLUS NUMBER RBRACKET COMMA REGISTER{
-        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_LITERAL, $5, nullptr, $3), $8)); 
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_LITERAL, $5, "", $3), $8)); 
     }
     | LD LBRACKET REGISTER PLUS IDENTIFIER RBRACKET COMMA REGISTER{
-        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_SYMBOL, 0, $5, $3), $8));
+        Assembler::tokenList.push_back(new LdCommandToken(OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_SYMBOL, 0, string($5), $3), $8));
     }
     ;
 
@@ -212,22 +212,22 @@ st_instuction: ST REGISTER COMMA DOLLAR NUMBER {
                 exit(1);
     }
     | ST REGISTER COMMA NUMBER{
-        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_LITERAL, $4, nullptr, 0)));
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_LITERAL, $4, "", 0)));
     }
     | ST REGISTER COMMA IDENTIFIER{
-        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_SYMBOL, 0, $4, 0)));
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_SYMBOL, 0, string($4), 0)));
     }
     | ST REGISTER COMMA REGISTER{
-        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::REGISTER_VALUE, 0, nullptr, $4)));
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::REGISTER_VALUE, 0, "", $4)));
     }
     | ST REGISTER COMMA LBRACKET REGISTER RBRACKET{
-        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, nullptr, $5)));
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_REGISTER, 0, "", $5)));
     }
     | ST REGISTER COMMA LBRACKET REGISTER PLUS NUMBER RBRACKET{
-        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_LITERAL, $7, nullptr, $5)));
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_LITERAL, $7, "", $5)));
     }
     | ST REGISTER COMMA LBRACKET REGISTER PLUS IDENTIFIER RBRACKET{
-        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_SYMBOL, 0, $7, $5)));
+        Assembler::tokenList.push_back(new StCommandToken($2, OperandData(OperandData::OperandDataType::MEMORY_REGISTER_OFFSET_SYMBOL, 0, string($7), $5)));
     }
     ;
 

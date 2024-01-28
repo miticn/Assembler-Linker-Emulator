@@ -24,7 +24,8 @@ struct LabelToken : public Token{
     uint32_t getSize() override {
         return 0;
     }
-    string getName(){ return name; }
+    string getName(){ return "label"; }
+    string getLabelName(){ return name; }
     TokenType getType() override {
         return TokenType::LABEL;
     }

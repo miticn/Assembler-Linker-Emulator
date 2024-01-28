@@ -39,12 +39,12 @@ struct WordDirectiveToken : public DirectiveToken{
         return backpatch;
     }
     uint32_t value;
-    char *symbol;
+    string symbol;
     bool backpatch;
     string getName(){ return "word"; }
     uint32_t getValue(){ return value; }
     string getSymbol(){ return symbol; }
-    WordDirectiveToken(uint32_t value, char * symbol = nullptr, bool backpatch = false)
+    WordDirectiveToken(uint32_t value, string symbol = "", bool backpatch = false)
         : value(value), symbol(symbol), backpatch(backpatch) {}
 };
 
@@ -58,11 +58,11 @@ struct SkipDirectiveToken : public DirectiveToken{
 };
 
 struct AsciiDirectiveToken : public DirectiveToken{
-    char *str;
+    string str;
     string getName(){ return "ascii"; }
-    AsciiDirectiveToken(char *str): str(str) {}
+    AsciiDirectiveToken(string str): str(str) {}
     uint32_t getSize() override {
-        return strlen(str);
+        return str.size();
     }
     string getAsciiString(){ return str; }
 };

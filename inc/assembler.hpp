@@ -15,10 +15,19 @@ private:
     
     Symbol_table symtab;
     vector<Section> sections;
-    vector<Relocation> relocationTable;
-    Section *currentSection = nullptr;
     uint32_t currentSectionIndex = 0;
     unordered_set<string> relocatableSymbols;
+
+
+    void processLabelTokenFirstPass(LabelToken* labelToken);
+    void processExistingSymbolFirstPass(uint32_t symbolIndex, LabelToken* labelToken, uint32_t sectionIndex);
+    void processDirectiveTokenFirstPass(DirectiveToken* directiveToken);
+    void processSectionDirectiveTokenFirstPass(SectionDirectiveToken* sectionToken);
+    void processExternDirectiveTokenFirstPass(ExternDirectiveToken* externToken);
+    void processGlobalDirectiveTokenFirstPass(GlobalDirectiveToken* globalToken);
+    void processEquDirectiveTokenFirstPass(EquDirectiveToken* equToken);
+    void updateSymbolForDirective(uint32_t symbolIndex);
+    void updateCurrentSectionPosition(Token* token);
 
 public:
     static list<Token*> tokenList;

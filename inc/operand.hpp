@@ -7,14 +7,14 @@ using namespace std;
 
 struct Operand{
     uint32_t literal;
-    char* symbol;
+    string symbol;
 
     bool hasLiteral() const {
         return literal != 0;
     }
 
     bool hasSymbol() const {
-        return symbol != nullptr;
+        return symbol != "";
     }
 };
 
@@ -28,9 +28,9 @@ struct OperandJump : public Operand{
     OperandJump(uint32_t literal){
         this->type = LITERAL;
         this->literal = literal;
-        this->symbol = NULL;
+        this->symbol = "";
     }
-    OperandJump(char* symbol){
+    OperandJump(string symbol){
         this->type = SYMBOL;
         this->literal = 0; 
         this->symbol = symbol;
@@ -52,7 +52,7 @@ struct OperandData : public Operand{
     OperandDataType type;
     uint8_t reg;
     bool isBackpatchingNeeded;
-    OperandData(OperandDataType type, uint32_t literal, char* symbol, uint8_t reg) {
+    OperandData(OperandDataType type, uint32_t literal, string symbol, uint8_t reg) {
         this->type = type;
         this->literal = literal;
         this->symbol = symbol;
