@@ -35,17 +35,20 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
     this->symtab.printSymbolTable();
     secondPass();
 
-    FILE *outputFile = fopen(outputFileName, "w");
-    if (!outputFile) {
-        perror("Error opening output file");
-        return;
-    }
-
     // Write the data to the output file
     for (auto &section : this->sections) {
         section.mergeSectionAndPool();
     }
-    // Need to write Symbol table, Section(data, relocation table)
+    
+    std::ofstream outFile(outputFileName, std::ios::binary);
+    //write string for object file
+    outFile << "__OBJFILE__" << std::endl;
+    // serialize symtab into file
+    this->symtab.serialize(outFile);
+    // serialize sections into file
+    for (auto &section : this->sections) {
+        section.serialize(outFile);
+    }
 }
 
 void Assembler::printTokenList() {
