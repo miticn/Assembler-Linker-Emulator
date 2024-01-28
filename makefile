@@ -3,7 +3,7 @@
 all: flex bison assembler emulator linker
 
 assembler: flex
-	gcc -g -o src/assembler src/assembler.cpp misc/flex.cpp misc/bison.cpp -lstdc++
+	gcc -g -o src/assembler src/assembler.cpp misc/flex.cpp misc/bison.cpp src/literal_pool.cpp -lstdc++
 
 emulator:
 	g++ -o src/emulator src/emulator.cpp src/emulator_memory.cpp

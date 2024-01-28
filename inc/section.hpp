@@ -9,9 +9,10 @@ class Section{
 private:
     string name;
     uint32_t size, current_position;
-    vector<uint8_t> data;
+    
     
 public:
+    vector<uint8_t> data;
     LiteralPool literal_pool;
     vector<Relocation> relocationTable;
     
@@ -31,4 +32,5 @@ public:
         data.push_back(word); size += 4; 
         current_position += 4; 
     }
+    string getName() const { return name; }
 };

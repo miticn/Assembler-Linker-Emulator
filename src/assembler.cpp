@@ -34,6 +34,19 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
     cout<<"First pass done"<<endl;
     this->symtab.printSymbolTable();
     secondPass();
+
+    FILE *outputFile = fopen(outputFileName, "w");
+    if (!outputFile) {
+        perror("Error opening output file");
+        return;
+    }
+
+    // Write the data to the output file
+    for (auto &section : this->sections) {
+        //cout secitons
+        cout << "Section: " << section.getName() << endl;
+        fwrite(section.data.data(), sizeof(uint8_t), section.data.size(), outputFile);
+    }
 }
 
 void Assembler::printTokenList() {
@@ -89,6 +102,7 @@ void Assembler::processExistingSymbolFirstPass(uint32_t symbolIndex, LabelToken*
         relocatableSymbols.insert(labelToken->getLabelName());
     } else {
         cout << "Error: Symbol " << labelToken->getLabelName() << " already defined" << endl;
+        exit(1);
     }
 }
 
@@ -150,6 +164,7 @@ void Assembler::processEquDirectiveTokenFirstPass(EquDirectiveToken* equToken) {
             symtab.symbols[symbolIndex].value = equToken->getValue();
         } else {
             cout << "Error: Symbol " << equToken->getName() << " already defined" << endl;
+            exit(1);
         }
     } else {
         Symbol symbol = Symbol(equToken->getValue(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, equToken->getName(), sectionIndex);
@@ -173,7 +188,11 @@ void Assembler::secondPass() {
         } else if (token->getType() == TokenType::COMMAND) {
             processCommandTokenSecondPass(token);
         }
-        updateCurrentSectionPosition(token);
+        //updateCurrentSectionPosition(token);
+    }
+    //merge section and literal pool both are vectors
+    for (auto &section : this->sections) {
+        section.data.insert(section.data.end(), section.literal_pool.pool.begin(), section.literal_pool.pool.end());
     }
 }
 
@@ -200,24 +219,23 @@ void Assembler::processSectionDirectiveSecondPass(Token* token) {
 void Assembler::processWordDirectiveSecondPass(Token* token) {
     WordDirectiveToken* wordToken = (WordDirectiveToken*)token;
     if (wordToken->isBackpatchingNeeded()) {
-        processBackpatchingForWordSecondPass(wordToken);
-    } else {
-        sections[currentSectionIndex].add4Bytes(wordToken->getValue());
-    }
-}
-
-void Assembler::processBackpatchingForWordSecondPass(WordDirectiveToken* wordToken) {
-    uint32_t symbolIndex = this->symtab.findSymbolIndex(wordToken->getSymbol());
-    if (symbolIndex == 0) {
-        cout << "Error: Symbol " << wordToken->getSymbol() << " not defined" << endl;
-    } else if (symtab.symbols[symbolIndex].section_index == 0) {
-        sections[currentSectionIndex].add4Bytes(0);
-    } else {
-        sections[currentSectionIndex].add4Bytes(symtab.symbols[symbolIndex].value);
-        if (this->relocatableSymbols.find(symtab.symbols[symbolIndex].name) != this->relocatableSymbols.end()) {
-            Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition() - 4, 0, this->currentSectionIndex);
-            sections[currentSectionIndex].relocationTable.push_back(relocation);
+        //is symbol
+        uint32_t symbolIndex = this->symtab.findSymbolIndex(wordToken->getSymbol());
+        if (symbolIndex == 0) {
+            cout << "Error: Symbol " << wordToken->getSymbol() << " not defined" << endl;
+            exit(1);
+        } else if (symtab.symbols[symbolIndex].section_index == 0) {
+            sections[currentSectionIndex].add4Bytes(0);
+        } else {
+            sections[currentSectionIndex].add4Bytes(symtab.symbols[symbolIndex].value);
+            if (this->relocatableSymbols.find(symtab.symbols[symbolIndex].name) != this->relocatableSymbols.end()) {
+                Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition() - 4, 0, this->currentSectionIndex);
+                sections[currentSectionIndex].relocationTable.push_back(relocation);
+            }
         }
+    } else {
+        //is literal
+        sections[currentSectionIndex].add4Bytes(wordToken->getValue());
     }
 }
 
@@ -239,21 +257,37 @@ void Assembler::processCommandTokenSecondPass(Token* token) {
     CommandToken* commandToken = (CommandToken*)token;
     sections[currentSectionIndex].add4Bytes(commandToken->getInstruction());
     if (commandToken->isBackpatchingNeeded()) {
-        processDataBackpatchingSecondPass(token);
-    }
-}
+        OperandCommandToken* operandCommandToken = (OperandCommandToken*)token;
+        Operand* operand = operandCommandToken->getOperandPtr();
+        if (operand->hasLiteral()) {
+            // Handle literal backpatching
+            sections[currentSectionIndex].literal_pool.addLiteral(operand->literal);//safe operation
+            uint32_t offsetFromPoolStart = sections[currentSectionIndex].literal_pool.getLiteralOffset(operand->literal);
+            uint32_t disp = sections[currentSectionIndex].getSize() + offsetFromPoolStart - sections[currentSectionIndex].getCurrentPosition();
+            if ((disp & 0xFFF) == disp)
+                operandCommandToken->disp = disp;
+            else {
+                cout << "Error: Literal " << operand->literal << " too far away from instruction" << endl;
+                exit(1);
+            }
 
-void Assembler::processDataBackpatchingSecondPass(Token* token) {
-    DataCommandToken* dataCommandToken = (DataCommandToken*)token;
-    Operand* operand = dataCommandToken->getOperandPtr();
-    if (operand->hasLiteral()) {
-        // Handle literal backpatching
-    } else if (operand->hasSymbol()) {
-        if (this->relocatableSymbols.find(operand->symbol) != this->relocatableSymbols.end()) {
-            // Handle symbol backpatching
+        } else if (operand->hasSymbol()) {
+            if (this->symtab.findSymbolIndex(operand->symbol) != 0) {
+                // check if symbol value is defined
+                uint32_t symbolIndex = symtab.findSymbolIndex(operand->symbol);
+                sections[currentSectionIndex].literal_pool.addSymbol(operand->symbol, symtab.symbols[symbolIndex].value);
+                if (symtab.symbols[symtab.findSymbolIndex(operand->symbol)].section_index == 0) {
+                    //add relocation
+                }
+                
+
+            } else{
+                cout << "Error: Symbol " << operand->symbol << " not defined" << endl;
+            }
+        } else {
+            cout << "Error: Operand has no literal or symbol, can't be backpatched" << endl;
+            exit(1);
         }
-    } else {
-        cout << "Error: Operand has no literal or symbol, can't be backpatched" << endl;
     }
 }
 
@@ -266,24 +300,27 @@ void Assembler::resetSectionPositions() {
 
 int main(int argc, char *argv[]) {
     Assembler assembler;
-    if (argc < 2) {
-        printf("Usage: %s [options] <input_file>\n", argv[0]);
-        return 1;
-    }
-
+    char *inputFileName = NULL;
     char *outputFileName = "output.o";
-    
-    for (int i = 1; i < argc - 1; i++) {
+
+    // Parse command-line arguments
+    for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-o") == 0 && i + 1 < argc) {
             outputFileName = argv[i + 1];
             i++;
+        } else if (argv[i][0] != '-') {
+            inputFileName = argv[i];
         } else {
             printf("Unknown option: %s\n", argv[i]);
             return 1;
         }
     }
 
-    char *inputFileName = argv[argc - 1];
+    // Check if an input file is provided
+    if (inputFileName == NULL) {
+        printf("Usage: %s [options] <input_file>\n", argv[0]);
+        return 1;
+    }
 
     assembler.assemble(inputFileName, outputFileName);
 
