@@ -5,6 +5,7 @@
 #include <iostream>
 using namespace std;
 
+#define ABS_SYMBOL_INDEX 0xFFFFFFFF
 struct Symbol{
     enum Type {NOTYPE,SECTION};
     enum Bind {LOCAL, GLOBAL};

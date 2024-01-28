@@ -34,9 +34,14 @@ public:
     string getName() const { return name; }
 
     void mergeSectionAndPool() {
+        if (literal_pool.pool.empty()) return;
         size_t originalDataSize = data.size();
         data.resize(originalDataSize + literal_pool.pool.size());
         std::copy(literal_pool.pool.begin(), literal_pool.pool.end(), data.begin() + originalDataSize);
+        //destroy literal pool
+        literal_pool.pool.clear();
+        //update maps
+        literal_pool.updateMaps(originalDataSize);
     }
 
 

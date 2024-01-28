@@ -149,13 +149,13 @@ void Assembler::processEquDirectiveTokenFirstPass(EquDirectiveToken* equToken) {
     // Process equ directive tokens encountered during the first pass
     uint32_t symbolIndex = symtab.findSymbolIndex(equToken->getSymbolName());
     if (symbolIndex==0 && symtab.symbols[symbolIndex].section_index == 0) {
-        symtab.symbols[symbolIndex].section_index = currentSectionIndex;
+        symtab.symbols[symbolIndex].section_index = ABS_SYMBOL_INDEX;
         symtab.symbols[symbolIndex].value = equToken->getValue();
     } else if (symbolIndex==0 && symtab.symbols[symbolIndex].section_index != 0) {
         cout << "Error: Symbol " << equToken->getName() << " already defined" << endl;
         exit(1);
     } else {
-        Symbol symbol = Symbol(equToken->getValue(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, equToken->getName(), currentSectionIndex);
+        Symbol symbol = Symbol(equToken->getValue(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, equToken->getName(), ABS_SYMBOL_INDEX);
         symtab.addSymbol(symbol);
     }
 }
@@ -214,7 +214,7 @@ void Assembler::processWordDirectiveSecondPass(Token* token) {
             exit(1);
         } else if (symtab.symbols[symbolIndex].section_index == 0) { //is global and not defined
             sections[currentSectionIndex].add4Bytes(0);
-            Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition() - 4, symbolIndex, this->currentSectionIndex);
+            Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition() - 4, symbolIndex);
             sections[currentSectionIndex].relocationTable.push_back(relocation);
         } else { //is defined
             sections[currentSectionIndex].add4Bytes(symtab.symbols[symbolIndex].value);

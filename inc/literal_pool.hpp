@@ -22,6 +22,15 @@ public:
     uint32_t getLiteralOffset(uint32_t value);
     uint32_t getSize();
 
+    void updateMaps(uint32_t offset){
+        for (auto& entry : poolMapSymbol) {
+            entry.second += offset;
+        }
+        for (auto& entry : poolMapLiteral) {
+            entry.second += offset;
+        }
+    }
+
     void serialize(std::ostream& stream) const {
         // Serialize poolMapLiteral size and entries
         uint32_t mapLiteralSize = poolMapLiteral.size();
