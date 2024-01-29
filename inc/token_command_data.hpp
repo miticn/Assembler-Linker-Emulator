@@ -97,11 +97,13 @@ struct StCommandToken : public DataCommandToken{
                 this->regA = 15;
                 this->mod = 0b0010;
                 //backpatch disp to literal table
+                this->backpatching = true;
                 break;
             case OperandData::MEMORY_SYMBOL:
                 this->regA = 15;
                 this->mod = 0b0010;
                 //backpatch disp to symbol table
+                this->backpatching = true;
                 break;
             case OperandData::REGISTER_VALUE:
                 this->oc = 0b1001;
@@ -123,6 +125,7 @@ struct StCommandToken : public DataCommandToken{
                 this->mod = 0b0000;
                 this->regA = operand.reg;
                 //backpatch disp
+                this->backpatching = true;
                 break;
         }
         

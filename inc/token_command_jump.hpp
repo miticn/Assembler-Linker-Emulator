@@ -19,7 +19,7 @@ struct JmpCommandToken : public JumpCommandToken{
     JmpCommandToken(OperandJump operand){
         this->regA = 15;
         this->oc = 0b0011;
-        this->mod = 0b0000;
+        this->mod = 0b1000;
         this->operand = operand;
     }
 };
@@ -33,7 +33,7 @@ struct BeqCommandToken : public JumpCommandToken{
         this->regB = reg1;
         this->regC = reg2;
         this->oc = 0b0011;
-        this->mod = 0b0001;
+        this->mod = 0b1001;
         this->operand = operand;
     }
 };
@@ -47,7 +47,7 @@ struct BneCommandToken : public JumpCommandToken{
         this->regB = reg1;
         this->regC = reg2;
         this->oc = 0b0011;
-        this->mod = 0b0010;
+        this->mod = 0b1010;
         this->operand = operand;
     }
 };
@@ -61,7 +61,7 @@ struct BgtCommandToken : public JumpCommandToken{
         this->regB = reg1;
         this->regC = reg2;
         this->oc = 0b0011;
-        this->mod = 0b0011;
+        this->mod = 0b1011;
         this->operand = operand;
     }
 };
@@ -73,7 +73,7 @@ struct CallCommandToken : public JumpCommandToken{
     CallCommandToken(OperandJump operand){
         this->regA = 15;
         this->oc = 0b0010;
-        this->mod = 0b0000;
+        this->mod = 0b0001;
         this->operand = operand;
     }
 };
