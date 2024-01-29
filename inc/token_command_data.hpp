@@ -3,9 +3,10 @@
 #include "token_command_generic.hpp"
 
 struct DataCommandToken : public OperandCommandToken{
+    bool backpatching = false;
     OperandData operand;
     bool isBackpatchingNeeded() override {
-        return operand.isBackpatchingNeeded;
+        return backpatching;
     }
     Operand* getOperandPtr() override {
         return &operand;
@@ -24,16 +25,10 @@ struct LdCommandToken : public DataCommandToken{
         this->regA = reg1;
         switch(operand.type){
             case OperandData::LITERAL_VALUE:
-                if(operand.literal > 0xFF){
-                    this->regB = 15;
-                    this->mod = 0b0010;
-                    //backpatch disp to literal table
-                }
-                else{
-                    this->disp = operand.literal;
-                    this->mod = 0b0001;
-                    this->operand.isBackpatchingNeeded = false;
-                }
+                this->regB = 15;
+                this->mod = 0b0010;
+                //backpatch disp to literal table
+                this->backpatching = true;
                 break;
             case OperandData::MEMORY_LITERAL:
                 //this is basicly LITERAL_VALUE + MEMORY_REGISTER
@@ -45,12 +40,12 @@ struct LdCommandToken : public DataCommandToken{
                 this->regB = 15;
                 this->mod = 0b0010;
                 //backpatch disp to symbol table
+                this->backpatching = true;
                 break;
             case OperandData::MEMORY_SYMBOL:
                 //this is basicly SYMBOL_VALUE + MEMORY_REGISTER
                 cout << "ERROR: LdCommandToken: MEMORY_SYMBOL should be two instructions." << endl;
                 exit(1);
-
                 break;
             case OperandData::REGISTER_VALUE:
                 this->regB = operand.reg;
@@ -61,6 +56,10 @@ struct LdCommandToken : public DataCommandToken{
                 this->mod = 0b0010;
                 break;
             case OperandData::MEMORY_REGISTER_OFFSET_LITERAL:
+                if(operand.literal > 0xFF){
+                    std::cout << "Error: literal too large for memory offset" << endl;
+                    exit(1);
+                }
                 this->regB = operand.reg;
                 this->mod = 0b0010;
                 this->disp = operand.literal;
@@ -69,6 +68,7 @@ struct LdCommandToken : public DataCommandToken{
                 this->regB = operand.reg;
                 this->mod = 0b0010;
                 //backpatch disp
+                this->backpatching = true;
                 break;
         }
         

@@ -45,21 +45,11 @@ struct OperandJump : public Operand{
 
 struct OperandData : public Operand{
     uint8_t reg;
-    bool isBackpatchingNeeded;
     OperandData(OperandType type, uint32_t literal, string symbol, uint8_t reg) {
         this->type = type;
         this->literal = literal;
         this->symbol = symbol;
         this->reg = reg;
-        if (type == REGISTER_VALUE || type == MEMORY_REGISTER || type == MEMORY_REGISTER_OFFSET_LITERAL){
-            if(type == MEMORY_REGISTER_OFFSET_LITERAL && literal > 0xFF){
-                std::cout << "Error: literal too large for memory offset" << endl;
-                exit(1);
-            }
-            this->isBackpatchingNeeded = false;
-        } else {
-            this->isBackpatchingNeeded = true;
-        }
     }
 };
 
