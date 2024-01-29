@@ -218,6 +218,10 @@ void Assembler::processWordDirectiveSecondPass(Token* token) {
             sections[currentSectionIndex].relocationTable.push_back(relocation);
         } else { //is defined
             sections[currentSectionIndex].add4Bytes(symtab.symbols[symbolIndex].value);
+            if(symtab.symbols[symbolIndex].section_index != ABS_SYMBOL_INDEX){
+                Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition() - 4, symtab.symbols[symbolIndex].section_index);
+                sections[currentSectionIndex].relocationTable.push_back(relocation);
+            }
         }
     } else {
         //is literal

@@ -6,10 +6,10 @@ assembler: flex
 	gcc -g -o src/assembler src/assembler.cpp misc/flex.cpp misc/bison.cpp src/literal_pool.cpp -lstdc++
 
 emulator:
-	g++ -o src/emulator src/emulator.cpp src/emulator_memory.cpp
+	gcc -g -o src/emulator src/emulator.cpp src/emulator_memory.cpp -lstdc++
 
 linker:
-	g++ -o src/linker src/linker.cpp
+	gcc -g -o src/linker src/linker.cpp -lstdc++
 
 flex: bison
 	flex misc/flex.l
@@ -19,7 +19,7 @@ bison:
 
 
 serialization_test:
-	g++ -g src/setialization_test.cpp src/literal_pool.cpp src/section.cpp src/realocation.cpp -o ser_test
+	gcc -g src/setialization_test.cpp src/literal_pool.cpp src/section.cpp src/realocation.cpp -o ser_test -lstdc++
 
 clean:
 	rm -f misc/flex.yy.c misc/flex misc/flex.cpp misc/flex.hpp

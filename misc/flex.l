@@ -40,6 +40,8 @@ CONTROL_REGISTER %cr[0-2]|%status|%handler|%cause
 "+" {return PLUS;}
 "[" {return LBRACKET;}
 "]" {return RBRACKET;}
+"(" {return LPAREN;}
+")" {return RPAREN;}
 ".global" {return GLOBAL;}
 ".extern" {return EXTERN;}
 ".section" {return SECTION;}
