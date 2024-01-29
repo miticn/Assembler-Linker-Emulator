@@ -9,7 +9,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/src/assembler",
-      "args": ["tests/01-ss-2022-2023-projekat-odbrana-testovi/nivo-a/isr_terminal.s"],
+      "args": ["tests/01-ss-2022-2023-projekat-odbrana-testovi/nivo-a/main.s"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],

@@ -31,8 +31,9 @@ private:
 
 
 
-
+    void makeLiteralPools();
     void resetSectionPositions();
+
     void processDirectiveTokenSecondPass(Token* token);
     void processSectionDirectiveSecondPass(Token* token);
     void processWordDirectiveSecondPass(Token* token);

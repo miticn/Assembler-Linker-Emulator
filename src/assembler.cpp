@@ -37,10 +37,11 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
     
     std::ofstream outFile(outputFileName, std::ios::binary);
     //write string for object file
-    outFile << "__OBJFILE__" << std::endl;
+    outFile << "__OBJFILE__";
     // serialize symtab into file
     this->symtab.serialize(outFile);
     // serialize sections into file
+    outFile << "__SECTIONS__";
     for (auto &section : this->sections) {
         section.serialize(outFile);
     }
@@ -169,6 +170,8 @@ void Assembler::updateCurrentSectionPosition(Token* token) {
 //****************SECOND PASS*****************//
 void Assembler::secondPass() {
     resetSectionPositions();
+    makeLiteralPools();    
+    
 
     for (auto token : tokenList) {
         if (token->getType() == TokenType::DIRECTIVE) {
@@ -177,10 +180,6 @@ void Assembler::secondPass() {
             processCommandTokenSecondPass(token);
         }
         //updateCurrentSectionPosition(token);
-    }
-    //merge section and literal pool both are vectors
-    for (auto &section : this->sections) {
-        section.mergeSectionAndPool();
     }
 }
 
@@ -245,46 +244,64 @@ void Assembler::processAsciiDirectiveSecondPass(Token* token) {
 
 void Assembler::processCommandTokenSecondPass(Token* token) {
     CommandToken* commandToken = (CommandToken*)token;
-    sections[currentSectionIndex].add4Bytes(commandToken->getInstruction());
     if (commandToken->isBackpatchingNeeded()) {
-        OperandCommandToken* operandCommandToken = (OperandCommandToken*)token;
+        OperandCommandToken* operandCommandToken = (OperandCommandToken*)commandToken;
         Operand* operand = operandCommandToken->getOperandPtr();
-        if (operand->hasLiteral()) {
-            // Handle literal backpatching
-            sections[currentSectionIndex].literal_pool.addLiteral(operand->literal);//safe operation
-            uint32_t offsetFromPoolStart = sections[currentSectionIndex].literal_pool.getLiteralOffset(operand->literal);
-            uint32_t disp = sections[currentSectionIndex].getSize() + offsetFromPoolStart - sections[currentSectionIndex].getCurrentPosition();
-            if ((disp & 0xFFF) == disp)
-                operandCommandToken->disp = disp;
-            else {
-                cout << "Error: Literal " << operand->literal << " too far away from instruction" << endl;
-                exit(1);
-            }
-
-        } else if (operand->hasSymbol()) {
-            if (this->symtab.findSymbolIndex(operand->symbol) != 0) {
-                // check if symbol value is defined
-                uint32_t symbolIndex = symtab.findSymbolIndex(operand->symbol);
-                sections[currentSectionIndex].literal_pool.addSymbol(operand->symbol, symtab.symbols[symbolIndex].value);
-                if (symtab.symbols[symtab.findSymbolIndex(operand->symbol)].section_index == 0) {
-                    //add relocation
+        uint32_t disp = 0;
+        if(operand->hasLiteral()){
+            //add to literal pool
+            this->sections[currentSectionIndex].literal_pool->addLiteral(operand->literal);
+            uint32_t offsetFromSectionStart = this->sections[currentSectionIndex].literal_pool->getLiteralOffset(operand->literal);
+            disp = offsetFromSectionStart - this->sections[currentSectionIndex].getCurrentPosition();
+        } else if (operand->hasSymbol()){
+            uint32_t symbolIndex = symtab.findSymbolIndex(operand->symbol);
+            if(operand->type==Operand::OperandType::MEMORY_REGISTER_OFFSET_SYMBOL){
+                //backpatch directly to disp
+                if(this->symtab.symbols[symbolIndex].section_index!= ABS_SYMBOL_INDEX){
+                    cout << "Error: Symbol " << operand->symbol << " is not absolute(REG+SYMB)" << endl;
+                    exit(1);
                 }
-                
-
-            } else{
-                cout << "Error: Symbol " << operand->symbol << " not defined" << endl;
+                disp = this->symtab.symbols[symbolIndex].value;
+                if(disp > 0xFFF){
+                    cout << "Error: Symbol " << operand->symbol << " is too large for memory offset" << endl;
+                    exit(1);
+                }
             }
-        } else {
-            cout << "Error: Operand has no literal or symbol, can't be backpatched" << endl;
+            else if (symbolIndex == 0) {
+                cout << "Error: Symbol " << operand->symbol << " not declared" << endl;
+                exit(1);
+            } else if (symtab.symbols[symbolIndex].section_index == 0) { //is global and not defined
+                sections[currentSectionIndex].literal_pool->addSymbol(operand->symbol, 0);
+                disp = sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol) - sections[currentSectionIndex].getCurrentPosition();
+                Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition(), symbolIndex);
+                sections[currentSectionIndex].relocationTable.push_back(relocation);
+            } else { //is defined
+                sections[currentSectionIndex].literal_pool->addSymbol(operand->symbol, symtab.symbols[symbolIndex].value);
+                disp = sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol) - sections[currentSectionIndex].getCurrentPosition();
+                if(symtab.symbols[symbolIndex].section_index != ABS_SYMBOL_INDEX){
+                    Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition(), symtab.symbols[symbolIndex].section_index);
+                    sections[currentSectionIndex].relocationTable.push_back(relocation);
+                }
+            }
+        }else{
+            cout << "Error: Command " << commandToken->getName() << " has no operand" << endl;
             exit(1);
         }
+        commandToken->disp = disp;
     }
+    sections[currentSectionIndex].add4Bytes(commandToken->getInstruction());
 }
 
 void Assembler::resetSectionPositions() {
     this->currentSectionIndex = 0;
     for (auto &section : this->sections) {
         section.resetPosition();
+    }
+}
+
+void Assembler::makeLiteralPools(){
+    for (auto &section : this->sections) {
+        section.makePool();
     }
 }
 

@@ -56,7 +56,7 @@ struct LdCommandToken : public DataCommandToken{
                 this->mod = 0b0010;
                 break;
             case OperandData::MEMORY_REGISTER_OFFSET_LITERAL:
-                if(operand.literal > 0xFF){
+                if(operand.literal > 0xFFF){
                     std::cout << "Error: literal too large for memory offset" << endl;
                     exit(1);
                 }
