@@ -44,6 +44,10 @@ public:
         }
         return 0;
     }
+
+    uint32_t getNumSections() const {
+        return insert_section_index-1;
+    }
     
     void addSymbol(const Symbol &symbol){
         symbols.push_back(symbol);

@@ -16,7 +16,7 @@ private:
     Symbol_table symtab;
     vector<Section> sections;
     uint32_t currentSectionIndex = 0;
-    unordered_set<string> relocatableSymbols;
+    //unordered_set<string> relocatableSymbols;
 
 
     void processLabelTokenFirstPass(LabelToken* labelToken);

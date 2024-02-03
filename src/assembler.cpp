@@ -95,7 +95,7 @@ void Assembler::processLabelTokenFirstPass(LabelToken* labelToken) {
         symtab.symbols[symbolIndex].section_index = currentSectionIndex;
         symtab.symbols[symbolIndex].value = sections[currentSectionIndex].getCurrentPosition();
     }
-    relocatableSymbols.insert(labelToken->getLabelName());
+    //relocatableSymbols.insert(labelToken->getLabelName());
 }
 
 void Assembler::processDirectiveTokenFirstPass(DirectiveToken* directiveToken) {

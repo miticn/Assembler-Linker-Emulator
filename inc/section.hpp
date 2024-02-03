@@ -16,6 +16,13 @@ public:
     LiteralPool *literal_pool;
     vector<Relocation> relocationTable;
     
+    Section(){
+        name = "";
+        current_position = 0;
+        data = {};
+        literal_pool = nullptr;
+    }
+
     Section(const string &name){
         this->name = name;
         current_position = 0;
