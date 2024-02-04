@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdlib>
 #include "../inc/linker.hpp"
+#include "../inc/linker_output.hpp"
 
 #define MAX_FILES 10
 #define MAX_SECTION_NAME 20
@@ -90,10 +91,44 @@ void Linker::outputFile(){
     }
 
     if(options.relocatable_flag){
-        //done
+        base.saveFile(this->base, options.output_filename);
+        return;
     }
 
+    LinkerOutput linkerOutput;
+    uint32_t maxAddress = 0;
     if (options.hex_flag){
+        for(PlaceOption placeOption: options.place_options){
+            uint32_t section_index = 0;
+            for(auto &symbol : base.symtab.symbols){
+                if(symbol.name == placeOption.section_name) {
+                    section_index = symbol.index;
+                }
+            }
+            if (section_index == 0){
+                cerr << "Error: Section " << placeOption.section_name << " not found." << endl;
+                exit(1);
+            }
+            if(placeOption.address + base.sections[placeOption.section_name].getSize() > maxAddress)
+                maxAddress = placeOption.address + base.sections[placeOption.section_name].getSize();
+            
+            linkerOutput.copySectionData(placeOption.address, base.sections[placeOption.section_name].data);
+            for(auto &symbol : base.symtab.symbols){
+                if(symbol.section_index == section_index) {
+                    symbol.value += placeOption.address;
+                }
+            }
+        }
+
+        for(auto &symbol : base.symtab.symbols){
+            if(symbol.type == Symbol::Type::SECTION){
+                //patch symbols
+                //add to output
+                //
+            }
+        }
+        
+        
         
     }
     
@@ -116,7 +151,6 @@ int main(int argc, char *argv[]) {
     // Initialize options
     options.hex_flag = false;
     options.relocatable_flag = false;
-    options.num_place_options = 0;
 
     // Parse command line arguments
     for (int i = 1; i < argc; i++) {
@@ -135,9 +169,7 @@ int main(int argc, char *argv[]) {
             if (pos != string::npos) {
                 string section_name = place_arg.substr(0, pos);
                 string address_str = place_arg.substr(pos + 1);
-                options.place_options[options.num_place_options].section_name = section_name;
-                options.place_options[options.num_place_options].address = stoul(address_str, nullptr, 0);
-                options.num_place_options++;
+                options.place_options.push_back(PlaceOption(section_name,stoul(address_str, nullptr, 0)));
             } else {
                 cerr << "Error: Invalid --place argument." << endl;
                 print_usage();

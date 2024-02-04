@@ -12,6 +12,10 @@ using namespace std;
 struct PlaceOption {
     string section_name;
     unsigned long address;
+    PlaceOption(const string &section_name, unsigned long address){
+        this->section_name = section_name;
+        this->address = address;
+    }
 };
 
 struct BaseObject{
@@ -70,14 +74,39 @@ struct BaseObject{
 
         return base;
     }
+
+    void saveFile(const BaseObject& base, const string& outputFileName) {
+
+        std::ofstream outFile(outputFileName, std::ios::binary);
+        if (!outFile.is_open()) {
+            cout << "Error: Unable to create or open file " << outputFileName << endl;
+            exit(1);
+        }
+
+        outFile << "__OBJFILE__" << endl;
+
+        base.symtab.serialize(outFile);
+
+        outFile << "__SECTIONS__" << endl;
+
+        uint32_t num_sections = base.sections.size();
+        outFile << num_sections << endl;
+
+        for (const auto& section_pair : base.sections) {
+            const Section& section = section_pair.second;
+            section.serialize(outFile);
+        }
+
+        outFile.close();
+    }
+
 };
 
 struct LinkerOptions {
     string output_filename;
     bool hex_flag;
     bool relocatable_flag;
-    int num_place_options;
-    PlaceOption place_options[MAX_OPTIONS];
+    vector<PlaceOption> place_options;
 };
 
 class Linker{

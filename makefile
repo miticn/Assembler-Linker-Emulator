@@ -9,7 +9,7 @@ emulator:
 	gcc -g -o src/emulator src/emulator.cpp src/emulator_memory.cpp -lstdc++
 
 linker:
-	gcc -g -o src/linker src/linker.cpp -lstdc++
+	gcc -g -o src/linker src/linker.cpp src/linker_output.cpp -lstdc++
 
 flex: bison
 	flex misc/flex.l
