@@ -7,6 +7,10 @@
 #include "literal_pool.hpp"
 #include "relocation.hpp"
 #include "token.hpp"
+#include "token_directive.hpp"
+#include "token_command_data.hpp"
+#include "token_command_jump.hpp"
+#include "token_command_generic.hpp"
 #include <list>
 #include <unordered_set>
 

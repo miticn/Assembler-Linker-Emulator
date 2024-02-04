@@ -76,6 +76,10 @@ void Assembler::firstPass() {
         // Update the current section position
         updateCurrentSectionPosition(token);
     }
+
+    for(uint32_t i = 0; i < symtab.symbols.size(); i++){
+        symtab.symbols[i].section_index = i;
+    }
 }
 
 void Assembler::processLabelTokenFirstPass(LabelToken* labelToken) {
@@ -125,11 +129,14 @@ void Assembler::processExternDirectiveTokenFirstPass(ExternDirectiveToken* exter
     uint32_t symbolIndex = symtab.findSymbolIndex(externToken->getSymbolName());
     if (symbolIndex == 0) {
         Symbol symbol = Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::GLOBAL, externToken->getSymbolName(), 0);
-        symbol.externDirective = true;
+        symbol.directive = Symbol::Directive::EXTERND;
         symtab.addSymbol(symbol);
-    } else {
+    } else if (symtab.symbols[symbolIndex].directive == Symbol::Directive::NONED){
         symtab.symbols[symbolIndex].bind = Symbol::Bind::GLOBAL;
-        symtab.symbols[symbolIndex].externDirective = true;
+        symtab.symbols[symbolIndex].directive = Symbol::Directive::EXTERND;
+    } else{
+        cout << "Error: Symbol " << externToken->getSymbolName() << " already defined" << endl;
+        exit(1);
     }
 }
 
@@ -138,11 +145,14 @@ void Assembler::processGlobalDirectiveTokenFirstPass(GlobalDirectiveToken* globa
     uint32_t symbolIndex = symtab.findSymbolIndex(globalToken->getSymbolName());
     if (symbolIndex == 0) {
         Symbol symbol = Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::GLOBAL, globalToken->getSymbolName(), 0);
-        symbol.globalDirective = true;
+        symbol.directive = Symbol::Directive::GLOBALD;
         symtab.addSymbol(symbol);
-    } else {
+    } else if (symtab.symbols[symbolIndex].directive == Symbol::Directive::NONED){
         symtab.symbols[symbolIndex].bind = Symbol::Bind::GLOBAL;
-        symtab.symbols[symbolIndex].globalDirective = true;
+        symtab.symbols[symbolIndex].directive = Symbol::Directive::GLOBALD;
+    } else {
+        cout << "Error: Symbol " << globalToken->getSymbolName() << " already defined" << endl;
+        exit(1);
     }
 }
 

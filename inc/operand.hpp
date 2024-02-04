@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <iostream>
+#include <cstdint>
 using namespace std;
 
 struct Operand{

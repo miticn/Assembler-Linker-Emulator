@@ -17,6 +17,25 @@ struct PlaceOption {
 struct BaseObject{
     Symbol_table symtab;
     unordered_map<string, Section> sections;
+    void changeIndex(uint32_t oldIndex, uint32_t newIndex){
+        for(auto &sym : symtab.symbols){
+            if(sym.section_index == oldIndex){
+                sym.section_index = newIndex;
+            }
+            if(sym.index == oldIndex){
+                sym.index = newIndex;
+            }
+        }
+        //change index in sections realocation table
+        for(auto &section : sections){
+            for(auto &rel : section.second.relocationTable){
+                if(rel.symbolIndex == oldIndex){
+                    rel.symbolIndex = newIndex;
+                }
+            }
+        }
+    }
+
     static BaseObject loadFile(string inputFileName){
         BaseObject base;
         //deserializes the file and returns a BaseObject

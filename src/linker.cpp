@@ -14,13 +14,66 @@ Linker::Linker(vector<string> input_files, LinkerOptions options){
 }
 
 void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base2){
-    //find overlapping symbols
+    uint32_t offsetIndex = base1.symtab.symbols.size();
     for(auto &sym : base2.symtab.symbols){
-        for(auto &sym2 : base1.symtab.symbols){
+        base2.changeIndex(sym.section_index, sym.section_index + offsetIndex);
+    }
+
+    //find overlapping symbols
+    for(uint32_t i = 0; i < base2.symtab.symbols.size(); i++){
+        for(auto &sym : base1.symtab.symbols){
+            auto &sym2 = base2.symtab.symbols[i];
             if(sym.name == sym2.name){
+                //sections
+                if(sym.type != sym2.type){
+                    cerr << "Error: Symbol " << sym.name << " has conflicting types." << endl;
+                    exit(1);
+                } else if(sym.type == Symbol::Type::SECTION){
+                    base2.changeIndex(sym2.section_index, sym.section_index);
+                    base1.changeIndex(sym2.section_index, sym.section_index);
+                    //merge sections
+                    uint32_t offset = base1.sections[sym.name].data.size();
+                    //everysymbol value that is dependent on the section needs to add the offset
+                    for(auto &sym : base2.symtab.symbols){
+                        if(sym.section_index == sym.index){
+                            sym.value += offset;
+                        }
+                    }
+                    base1.sections[sym.name].data.insert(base1.sections[sym.name].data.end(), base2.sections[sym2.name].data.begin(), base2.sections[sym2.name].data.end());
+                    //merge relocation table
+                    for(auto &rel : base2.sections[sym2.name].relocationTable){
+                        rel.offset += offset;
+                        base1.sections[sym.name].relocationTable.push_back(rel);
+                    }
+                    //remove section from base2
+                    base2.sections.erase(sym2.name);
+                    base2.symtab.symbols.erase(base2.symtab.symbols.begin() + i);
+                    i--;
+                    //one is extern other is global
+                } else if(sym.directive == Symbol::Directive::EXTERND && sym2.directive == Symbol::Directive::GLOBALD
+                || (sym.directive == Symbol::Directive::GLOBALD && sym2.directive == Symbol::Directive::EXTERND)){
+                    base2.changeIndex(sym2.index, sym.index);
+                    base1.changeIndex(sym2.index, sym.index);
+                    if(sym.directive == Symbol::Directive::EXTERND){
+                        sym = sym2;
+                    }
+                    //remove symbol from base2
+                    base2.symtab.symbols.erase(base2.symtab.symbols.begin() + i);
+                } else {
+                    cerr << "Error: Symbol " << sym.name << " has conflicting directives." << endl;
+                    exit(1);
+                }
                 
             }
         }
+    }
+    //merge the rest of the symbols
+    for(auto &sym : base2.symtab.symbols){
+        base1.symtab.symbols.push_back(sym);
+    }
+    //merge the rest of the sections
+    for(auto &sec : base2.sections){
+        base1.sections[sec.first] = sec.second;
     }
 }
 
@@ -34,6 +87,14 @@ void Linker::outputFile(){
     //merge the objects into the base
     for(BaseObject &obj : objects){
         mergeSecoundBaseObjectIntoFirst(base,obj);
+    }
+
+    if(options.relocatable_flag){
+        //done
+    }
+
+    if (options.hex_flag){
+        
     }
     
 }

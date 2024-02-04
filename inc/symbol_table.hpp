@@ -9,17 +9,19 @@ using namespace std;
 struct Symbol{
     enum Type {NOTYPE,SECTION};
     enum Bind {LOCAL, GLOBAL};
-
+    enum Directive {NONED, GLOBALD, EXTERND};
+    uint32_t index = 0;
     uint32_t value = 0;
     Type type = NOTYPE;
     Bind bind = LOCAL;
     string name;
     uint32_t section_index = 0;//Ndx
-    bool globalDirective = false;
-    bool externDirective = false;
+    Directive directive = NONED;
 
     Symbol(uint32_t value, Type type, Bind bind, const string& name, uint32_t section_index) 
     : value(value), type(type), bind(bind), name(name), section_index(section_index) {}
+    Symbol(uint32_t index, uint32_t value, Type type, Bind bind, const string& name, uint32_t section_index) 
+    : index(index), value(value), type(type), bind(bind), name(name), section_index(section_index) {}
 };
 
 
@@ -74,6 +76,7 @@ public:
         // Serialize each symbol in the table
         for (const Symbol& symbol : symbols) {
             // Serialize symbol attributes
+            stream.write(reinterpret_cast<const char*>(&symbol.index), sizeof(uint32_t));
             stream.write(reinterpret_cast<const char*>(&symbol.value), sizeof(uint32_t));
             stream.write(reinterpret_cast<const char*>(&symbol.type), sizeof(Symbol::Type));
             stream.write(reinterpret_cast<const char*>(&symbol.bind), sizeof(Symbol::Bind));
@@ -87,8 +90,7 @@ public:
             stream.write(reinterpret_cast<const char*>(&symbol.section_index), sizeof(uint32_t));
 
             // Serialize flags
-            stream.write(reinterpret_cast<const char*>(&symbol.globalDirective), sizeof(bool));
-            stream.write(reinterpret_cast<const char*>(&symbol.externDirective), sizeof(bool));
+            stream.write(reinterpret_cast<const char*>(&symbol.directive), sizeof(Symbol::Directive));
         }
     }
 
@@ -106,14 +108,16 @@ public:
 
         // Deserialize each symbol in the table
         for (uint32_t i = 0; i < tableSize; ++i) {
-            // Deserialize symbol attributes
+            // Deserialize symbol 
+            uint32_t index;
             uint32_t value;
             Symbol::Type type;
             Symbol::Bind bind;
             uint32_t nameLength;
             uint32_t sectionIndex;
-            bool globalDirective, externDirective;
+            Symbol::Directive directive;
 
+            stream.read(reinterpret_cast<char*>(&index), sizeof(uint32_t));
             stream.read(reinterpret_cast<char*>(&value), sizeof(uint32_t));
             stream.read(reinterpret_cast<char*>(&type), sizeof(Symbol::Type));
             stream.read(reinterpret_cast<char*>(&bind), sizeof(Symbol::Bind));
@@ -129,13 +133,11 @@ public:
             stream.read(reinterpret_cast<char*>(&sectionIndex), sizeof(uint32_t));
 
             // Deserialize flags
-            stream.read(reinterpret_cast<char*>(&globalDirective), sizeof(bool));
-            stream.read(reinterpret_cast<char*>(&externDirective), sizeof(bool));
+            stream.read(reinterpret_cast<char*>(&directive), sizeof(Symbol::Directive));
 
             // Create and add the symbol to the symbol table
-            symbols.emplace_back(value, type, bind, name, sectionIndex);
-            symbols.back().globalDirective = globalDirective;
-            symbols.back().externDirective = externDirective;
+            symbols.emplace_back(index, value, type, bind, name, sectionIndex);
+            symbols.back().directive = directive;
         }
     }
 
