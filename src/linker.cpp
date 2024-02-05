@@ -22,7 +22,7 @@ void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base
         base2.changeIndex(sym.index, sym.index + offsetIndex);
     }
 
-    //find overlapping symbols
+    //find overlapping sections
     for(uint32_t i = 0; i < base2.symtab.symbols.size(); i++){
         for(auto &sym : base1.symtab.symbols){
             auto &sym2 = base2.symtab.symbols[i];
@@ -32,8 +32,10 @@ void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base
                     cerr << "Error: Symbol " << sym.name << " has conflicting types." << endl;
                     exit(1);
                 } else if(sym.type == Symbol::Type::SECTION){
-                    base2.changeIndex(sym2.section_index, sym.section_index);
-                    base1.changeIndex(sym2.section_index, sym.section_index);
+                    uint32_t oldIndex = sym2.section_index;
+                    uint32_t newIndex = sym.section_index;
+                    base2.changeIndex(oldIndex, newIndex);
+                    base1.changeIndex(oldIndex, newIndex);
                     //merge sections
                     uint32_t offset = base1.sections[sym.name].data.size();
                     //everysymbol value that is dependent on the section needs to add the offset
@@ -52,17 +54,9 @@ void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base
                     base2.sections.erase(sym2.name);
                     base2.symtab.symbols.erase(base2.symtab.symbols.begin() + i);
                     i--;
-                    //one is extern other is global
-                } else if(sym.directive == Symbol::Directive::EXTERND && sym2.directive == Symbol::Directive::GLOBALD
-                || (sym.directive == Symbol::Directive::GLOBALD && sym2.directive == Symbol::Directive::EXTERND)){
-                    base2.changeIndex(sym2.index, sym.index);
-                    base1.changeIndex(sym2.index, sym.index);
-                    if(sym.directive == Symbol::Directive::EXTERND){
-                        sym = sym2;
-                    }
-                    //remove symbol from base2
-                    base2.symtab.symbols.erase(base2.symtab.symbols.begin() + i);
-                } else if(sym.name != "UND"){
+                    break;
+                } else if(!((sym.directive == Symbol::Directive::EXTERND && sym2.directive == Symbol::Directive::GLOBALD
+                || (sym.directive == Symbol::Directive::GLOBALD && sym2.directive == Symbol::Directive::EXTERND)))){
                     cerr << "Error: Symbol " << sym.name << " has conflicting directives." << endl;
                     exit(1);
                 }
@@ -70,6 +64,29 @@ void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base
             }
         }
     }
+    //find overlapping symbols
+    for(uint32_t i = 0; i < base2.symtab.symbols.size(); i++){
+        for(auto &sym : base1.symtab.symbols){
+            auto &sym2 = base2.symtab.symbols[i];
+            if((sym.name == sym2.name) 
+            && (sym.directive == Symbol::Directive::EXTERND && sym2.directive == Symbol::Directive::GLOBALD
+            || (sym.directive == Symbol::Directive::GLOBALD && sym2.directive == Symbol::Directive::EXTERND))){
+                uint32_t oldIndex = sym2.index;
+                uint32_t newIndex = sym.index;
+                base2.changeIndex(oldIndex, newIndex);
+                base1.changeIndex(oldIndex, newIndex);
+                if(sym.directive == Symbol::Directive::EXTERND){
+                    sym = sym2;
+                }
+                //remove symbol from base2
+                base2.symtab.symbols.erase(base2.symtab.symbols.begin() + i);
+                i--;
+                break;
+            }
+        }
+    }
+
+
     cout << "Merged base1:" << endl;
     base1.symtab.printSymbolTable();
     //merge the rest of the symbols
