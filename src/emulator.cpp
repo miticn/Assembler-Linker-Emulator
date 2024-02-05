@@ -168,7 +168,7 @@ ostream& operator<<(ostream &os, Emulator &emulator){
         char colon;
         ss >> std::hex >> address >> colon;
 
-        uint8_t value;
+        uint32_t value;
         while (ss >> std::hex >> value) {
             memory.set8BitValueAtAddress(address, value);
             address++;
@@ -338,4 +338,21 @@ void Emulator::executeLoad(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC
     default:
         break;
     }
+}
+
+
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <filename.hex>" << std::endl;
+        return 1;
+    }
+
+    const std::string inputFileName = argv[1];
+
+    Emulator myEmulator;
+    myEmulator.loadHex(inputFileName);
+    myEmulator.run();
+    std::cout << myEmulator << std::endl;
+
+    return 0;
 }

@@ -55,20 +55,3 @@ public:
     void run();
     void loadHex(string inputFileName);
 };
-
-
-int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " <filename.hex>" << std::endl;
-        return 1;
-    }
-
-    const std::string inputFileName = argv[1];
-
-    Emulator myEmulator;
-    myEmulator.loadHex(inputFileName);
-    myEmulator.run();
-    std::cout << myEmulator << std::endl;
-
-    return 0;
-}

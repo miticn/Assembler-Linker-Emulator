@@ -10,7 +10,8 @@ uint8_t EmulatorMemory::get8BitValueAtAddress(uint32_t address){
 uint32_t EmulatorMemory::get32BitValueAtAddress(uint32_t address){
     uint32_t returnValue = 0;
     for(int i = 3; i>0; i--){
-        returnValue |= get8BitValueAtAddress(address+i);
+        uint8_t byteValue = get8BitValueAtAddress(address+i);
+        returnValue |= byteValue;
         returnValue = returnValue << 8;
     }
     returnValue |= get8BitValueAtAddress(address);
