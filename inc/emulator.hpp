@@ -30,14 +30,14 @@ private:
     void push(uint32_t value);
 
 
-    void executeFunctionCall(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp);
-    void executeJump(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp);
-    void executeAtomicRegisterSwap(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp);
-    void executeArithmeticOperation(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp);
-    void executeLogicOperation(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp);
-    void executeShiftOperation(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp);
-    void executeStore(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp);
-    void executeLoad(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, uint16_t disp);
+    void executeFunctionCall(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, int16_t disp);
+    void executeJump(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, int16_t disp);
+    void executeAtomicRegisterSwap(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, int16_t disp);
+    void executeArithmeticOperation(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, int16_t disp);
+    void executeLogicOperation(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, int16_t disp);
+    void executeShiftOperation(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, int16_t disp);
+    void executeStore(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, int16_t disp);
+    void executeLoad(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, int16_t disp);
 
     bool timerInteruptEnabled(){return (status & 0b1)==0;}
     bool terminalInteruptEnabled(){return (status & 0b10)==0;}
