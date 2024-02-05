@@ -39,3 +39,11 @@ uint32_t LiteralPool::getSymbolOffset(const string& name) {
 uint32_t LiteralPool::getLiteralOffset(uint32_t value) {
     return poolMapLiteral[value];
 }
+
+bool LiteralPool::isSymbolPresent(const string& name) {
+    return poolMapSymbol.find(name) != poolMapSymbol.end();
+}
+
+bool LiteralPool::isLiteralPresent(uint32_t value) {
+    return poolMapLiteral.find(value) != poolMapLiteral.end();
+}

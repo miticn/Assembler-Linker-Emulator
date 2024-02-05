@@ -20,6 +20,9 @@ public:
     void addSymbol(const string& name, uint32_t value);
     void addLiteral(uint32_t value);
 
+    bool isSymbolPresent(const string& name);
+    bool isLiteralPresent(uint32_t value);
+
     uint32_t getSymbolOffset(const string& name);
     uint32_t getLiteralOffset(uint32_t value);
 

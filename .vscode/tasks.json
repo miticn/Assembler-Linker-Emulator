@@ -3,9 +3,43 @@
 	"tasks": [
 		{
 			"type": "cppbuild",
-			"label": "C/C++: gcc build project (make)",
+			"label": "C/C++: gcc build project (make) emulator",
 			"command": "make",
 			"args": ["emulator"],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: /usr/bin/gcc"
+		},
+		{
+			"type": "cppbuild",
+			"label": "C/C++: gcc build project (make) assembler",
+			"command": "make",
+			"args": ["assembler"],
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"detail": "compiler: /usr/bin/gcc"
+		},
+		{
+			"type": "cppbuild",
+			"label": "C/C++: gcc build project (make) linker",
+			"command": "make",
+			"args": ["linker"],
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},

@@ -259,7 +259,7 @@ void Assembler::processCommandTokenSecondPass(Token* token) {
             //add to literal pool
             this->sections[currentSectionIndex].literal_pool->addLiteral(operand->literal);
             uint32_t offsetFromSectionStart = this->sections[currentSectionIndex].literal_pool->getLiteralOffset(operand->literal);
-            disp = offsetFromSectionStart - this->sections[currentSectionIndex].getCurrentPosition();
+            disp = offsetFromSectionStart - this->sections[currentSectionIndex].getCurrentPosition() - 4;
         } else if (operand->hasSymbol()){
             uint32_t symbolIndex = symtab.findSymbolIndex(operand->symbol);
             if(operand->type==Operand::OperandType::MEMORY_REGISTER_OFFSET_SYMBOL){
@@ -278,17 +278,21 @@ void Assembler::processCommandTokenSecondPass(Token* token) {
                 cout << "Error: Symbol " << operand->symbol << " not declared" << endl;
                 exit(1);
             } else if (symtab.symbols[symbolIndex].section_index == 0) { //is global and not defined
-                sections[currentSectionIndex].literal_pool->addSymbol(operand->symbol, 0);
-                disp = sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol) - sections[currentSectionIndex].getCurrentPosition();
-                Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition(), symbolIndex);
-                sections[currentSectionIndex].relocationTable.push_back(relocation);
-            } else { //is defined
-                sections[currentSectionIndex].literal_pool->addSymbol(operand->symbol, symtab.symbols[symbolIndex].value);
-                disp = sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol) - sections[currentSectionIndex].getCurrentPosition();
-                if(symtab.symbols[symbolIndex].section_index != ABS_SYMBOL_INDEX){
-                    Relocation relocation = Relocation(sections[currentSectionIndex].getCurrentPosition(), symtab.symbols[symbolIndex].section_index);
+                if(!sections[currentSectionIndex].literal_pool->isSymbolPresent(operand->symbol)){
+                    sections[currentSectionIndex].literal_pool->addSymbol(operand->symbol, 0);
+                    Relocation relocation = Relocation(sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol), symbolIndex);
                     sections[currentSectionIndex].relocationTable.push_back(relocation);
                 }
+                disp = sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol) - sections[currentSectionIndex].getCurrentPosition() - 4;
+            } else { //is defined
+                if(!sections[currentSectionIndex].literal_pool->isSymbolPresent(operand->symbol)){
+                    sections[currentSectionIndex].literal_pool->addSymbol(operand->symbol, symtab.symbols[symbolIndex].value);
+                    if(symtab.symbols[symbolIndex].section_index != ABS_SYMBOL_INDEX){
+                        Relocation relocation = Relocation(sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol), symtab.symbols[symbolIndex].section_index);
+                        sections[currentSectionIndex].relocationTable.push_back(relocation);
+                    }
+                }
+                disp = sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol) - sections[currentSectionIndex].getCurrentPosition() - 4;
             }
         }else{
             cout << "Error: Command " << commandToken->getName() << " has no operand" << endl;

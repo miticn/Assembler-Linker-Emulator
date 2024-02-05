@@ -22,17 +22,6 @@ void Emulator::setGR(uint8_t registerId, uint32_t value){
 }
 
 void Emulator::executeInstuction(uint32_t instruction){
-    if(instruction == 0){
-        halted = true;
-        return;
-    }
-    if(instruction == 0x10000000){/* software interupt */
-        push(status);
-        push(pc);
-        cause = 4;
-        status = status&(~0x1);
-        pc = handler;
-    }
     uint32_t instruction_big_endian =
         ((instruction >> 24) & 0xff) |
         ((instruction >> 8) & 0xff00) |
@@ -46,29 +35,50 @@ void Emulator::executeInstuction(uint32_t instruction){
     uint32_t mod = (instruction_big_endian >> 24) & 0xf;
     uint32_t oc = (instruction_big_endian >> 28) & 0xf;
 
+    if(instruction == 0){
+        halted = true;
+        return;
+    }
+    if(instruction == 0x00000010){/* software interupt */
+        cout << "Software interupt" << endl;
+        push(status);
+        push(pc);
+        cause = 4;
+        status = status&(~0x1);
+        pc = handler;
+    }
+
     switch (oc) {
     case 0b0010:
+        cout << "Function call" << endl;
         executeFunctionCall(mod, regA, regB, regC, disp);
         break;
     case 0b0011:
+        cout << "Jump" << endl;
         executeJump(mod, regA, regB, regC, disp);
         break;
     case 0b0100:
+        cout << "Atomic register swap" << endl;
         executeAtomicRegisterSwap(mod, regA, regB, regC, disp);
         break;
     case 0b0101:
+        cout << "Arithmetic operation" << endl;
         executeArithmeticOperation(mod, regA, regB, regC, disp);
         break;
     case 0b0110:
+        cout << "Logic operation" << endl;
         executeLogicOperation(mod, regA, regB, regC, disp);
         break;
     case 0b0111:
+        cout << "Shift operation" << endl;
         executeShiftOperation(mod, regA, regB, regC, disp);
         break;
     case 0b1000:
+        cout << "Store" << endl;
         executeStore(mod, regA, regB, regC, disp);
         break;
     case 0b1001:
+        cout << "Load" << endl;
         executeLoad(mod, regA, regB, regC, disp);
         break;
     default:
@@ -99,11 +109,11 @@ ostream& operator<<(ostream &os, Emulator &emulator){
     auto start_time = chrono::steady_clock::now();
     bool last_timer_interupt_disabled = true;
     while(!this->isHalted()){
-        uint32_t tmp = pc;
+        uint32_t instruction = this->memory.get32BitValueAtAddress(pc);
         pc +=4;
-        this->executeInstuction(this->memory.get32BitValueAtAddress(tmp));
+        this->executeInstuction(instruction);
         //Timer stuff
-        if(this->timerInteruptEnabled()){
+        /*if(this->timerInteruptEnabled()){
             if(current_time_config!=memory.get32BitValueAtAddress(tim_cfg_address) || last_timer_interupt_disabled){
                 current_time_config = memory.get32BitValueAtAddress(tim_cfg_address);
                 last_timer_interupt_disabled = false;
@@ -152,7 +162,7 @@ ostream& operator<<(ostream &os, Emulator &emulator){
         //Terminal stuff
         if(this->terminalInteruptEnabled()){
 
-        }
+        }*/
 
     }
  }
@@ -306,7 +316,7 @@ void Emulator::executeStore(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t reg
         this->memory.set32BitValueAtAddress(memory.get32BitValueAtAddress(getGR(regA)+getGR(regB)+disp),getGR(regC));
         break;
     case 0b0001:
-        setGR(regA, getGR(regA)+disp);
+        setGR(regA, getGR(regA)+(int16_t)disp);
         this->memory.set32BitValueAtAddress(getGR(regA), getGR(regC));
         break;
     default:
