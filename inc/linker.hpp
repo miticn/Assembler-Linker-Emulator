@@ -49,18 +49,8 @@ struct BaseObject{
             exit(1);
         }
 
-        std::string header;
-        inFile >> header;
-        if (header != "__OBJFILE__") {
-            cout << "Error: Invalid file format OBJFILE" << endl;
-        }
-
         base.symtab.deserialize(inFile);
-
-        inFile >> header;
-        if (header != "__SECTIONS__") {
-            cout << "Error: Invalid file format SECTIONS" << endl;
-        }
+        base.symtab.printSymbolTable();
 
         uint32_t num_sections = base.symtab.getNumSections();
 
@@ -83,11 +73,7 @@ struct BaseObject{
             exit(1);
         }
 
-        outFile << "__OBJFILE__" << endl;
-
         base.symtab.serialize(outFile);
-
-        outFile << "__SECTIONS__" << endl;
 
         uint32_t num_sections = base.sections.size();
         outFile << num_sections << endl;

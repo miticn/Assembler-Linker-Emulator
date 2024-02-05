@@ -4,12 +4,38 @@
   // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
   "configurations": [
-    {
+    /*{
       "name": "make - Build and debug project",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/src/assembler",
+      "program": "${workspaceFolder}/assembler",
       "args": ["tests/01-ss-2022-2023-projekat-odbrana-testovi/nivo-a/main.s"],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Set Disassembly Flavor to Intel",
+          "text": "-gdb-set disassembly-flavor intel",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "C/C++: gcc build project (make)",
+      "miDebuggerPath": "/usr/bin/gdb"
+    },*/
+    {
+      "name": "make and debug linker",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/linker",
+      "args": ["-hex","-place=my_code@0x40000000","-place=math@0xF0000000", "-o", "program.hex", "tests/nivo-a/handler.o", "tests/nivo-a/math.o", "tests/nivo-a/main.o", "tests/nivo-a/isr_terminal.o", "tests/nivo-a/isr_timer.o", "tests/nivo-a/isr_software.o"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],

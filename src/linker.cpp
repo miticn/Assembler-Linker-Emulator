@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include "../inc/linker.hpp"
 #include "../inc/linker_output.hpp"
+#include <algorithm>
 
 #define MAX_FILES 10
 #define MAX_SECTION_NAME 20
@@ -15,9 +16,10 @@ Linker::Linker(vector<string> input_files, LinkerOptions options){
 }
 
 void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base2){
+    base2.symtab.symbols.erase(base2.symtab.symbols.begin());
     uint32_t offsetIndex = base1.symtab.symbols.size();
     for(auto &sym : base2.symtab.symbols){
-        base2.changeIndex(sym.section_index, sym.section_index + offsetIndex);
+        base2.changeIndex(sym.index, sym.index + offsetIndex);
     }
 
     //find overlapping symbols
@@ -60,7 +62,7 @@ void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base
                     }
                     //remove symbol from base2
                     base2.symtab.symbols.erase(base2.symtab.symbols.begin() + i);
-                } else {
+                } else if(sym.name != "UND"){
                     cerr << "Error: Symbol " << sym.name << " has conflicting directives." << endl;
                     exit(1);
                 }
@@ -68,14 +70,31 @@ void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base
             }
         }
     }
+    cout << "Merged base1:" << endl;
+    base1.symtab.printSymbolTable();
     //merge the rest of the symbols
     for(auto &sym : base2.symtab.symbols){
         base1.symtab.symbols.push_back(sym);
     }
+
+    cout << "Merged base2:" << endl;
+    base1.symtab.printSymbolTable();
     //merge the rest of the sections
     for(auto &sec : base2.sections){
         base1.sections[sec.first] = sec.second;
     }
+    //sort the symbols
+    sort(base1.symtab.symbols.begin(), base1.symtab.symbols.end(), [](Symbol &a, Symbol &b){
+        return a.index < b.index;
+    });
+
+    for(uint32_t i = 0; i < base1.symtab.symbols.size(); i++){
+        if(base1.symtab.symbols[i].index != i){
+            base1.changeIndex(base1.symtab.symbols[i].index, i);
+        }
+    }
+    cout << "Merged basee:" << endl;
+    base1.symtab.printSymbolTable();
 }
 
 void Linker::outputFile(){
@@ -95,6 +114,7 @@ void Linker::outputFile(){
         return;
     }
 
+    base.symtab.printSymbolTable();
     LinkerOutput linkerOutput;
     uint32_t maxAddress = 0;
     if (options.hex_flag){
@@ -139,7 +159,7 @@ void print_usage() {
     cout << "Usage: linker [options] <input_files>..." << endl;
     cout << "Options:" << endl;
     cout << "-o <output_filename>" << endl;
-    cout << "--place=<section_name>@<address>" << endl;
+    cout << "-place=<section_name>@<address>" << endl;
     cout << "-hex" << endl;
     cout << "-relocatable" << endl;
 }
@@ -163,15 +183,15 @@ int main(int argc, char *argv[]) {
                 print_usage();
                 return 1;
             }
-        } else if (string(argv[i]).find("--place=") == 0) {
-            string place_arg = string(argv[i]).substr(8);  // Skip "--place="
+        } else if (string(argv[i]).find("-place=") == 0) {
+            string place_arg = string(argv[i]).substr(7);  // Skip "--place="
             size_t pos = place_arg.find('@');
             if (pos != string::npos) {
                 string section_name = place_arg.substr(0, pos);
                 string address_str = place_arg.substr(pos + 1);
                 options.place_options.push_back(PlaceOption(section_name,stoul(address_str, nullptr, 0)));
             } else {
-                cerr << "Error: Invalid --place argument." << endl;
+                cerr << "Error: Invalid -place argument." << endl;
                 print_usage();
                 return 1;
             }
@@ -196,5 +216,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     Linker linker(input_files, options);
+    linker.outputFile();
     return 0;
 }

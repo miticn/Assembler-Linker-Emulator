@@ -31,7 +31,7 @@ private:
 public:
     vector<Symbol> symbols;
     Symbol_table(): insert_section_index(1) {
-        symbols = {Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, string("example"), 0)};
+        symbols = {Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, string("UND"), 0)};
     }
     void addSection(const string& name){
         symbols.insert(symbols.begin() + insert_section_index, Symbol(0, Symbol::Type::SECTION, Symbol::Bind::LOCAL, name, insert_section_index));
@@ -48,7 +48,13 @@ public:
     }
 
     uint32_t getNumSections() const {
-        return insert_section_index-1;
+        uint32_t numSections = 1;
+        for (const Symbol& symbol : symbols) {
+            if (symbol.type == Symbol::Type::SECTION) {
+                ++numSections;
+            }
+        }
+        return numSections;
     }
     
     void addSymbol(const Symbol &symbol){
@@ -61,7 +67,7 @@ public:
         //cout << symbols[0].name << endl;
 
         for (uint32_t i = 0; i < symbols.size(); i++) {
-            cout << i << " "<< symbols[i].name << " " << symbols[i].value << " " << symbols[i].section_index << " " << ((symbols[i].bind==Symbol::Bind::GLOBAL)?"GLOBAL":"LOCAL") << " " << ((symbols[i].type==Symbol::Type::NOTYPE)?"NOTYPE":"SECTION")<< endl;
+            cout << symbols[i].index << " "<< symbols[i].name << " " << symbols[i].value << " " << symbols[i].section_index << " " << ((symbols[i].bind==Symbol::Bind::GLOBAL)?"GLOBAL":"LOCAL") << " " << ((symbols[i].type==Symbol::Type::NOTYPE)?"NOTYPE":"SECTION")<< endl;
         }
     }
 

@@ -157,7 +157,7 @@ ostream& operator<<(ostream &os, Emulator &emulator){
 
     if (!hexFile.is_open()) {
         std::cerr << "Error opening the hex file." << std::endl;
-        return;
+        exit(1);
     }
 
     std::string line;

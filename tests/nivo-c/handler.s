@@ -1,6 +1,6 @@
 .extern isr_timer, isr_terminal
 
-.global handler,test
+.global handler
 .section my_handler
 handler:
     push %r1

@@ -29,19 +29,16 @@ void Assembler::assemble(char *inputFileName, char *outputFileName) {
 
     printTokenList();
 
-    this->symtab.printSymbolTable();
+    //this->symtab.printSymbolTable();
     firstPass();
     cout<<"First pass done"<<endl;
-    this->symtab.printSymbolTable();
     secondPass();
+    this->symtab.printSymbolTable();
     
     std::ofstream outFile(outputFileName, std::ios::binary);
-    //write string for object file
-    outFile << "__OBJFILE__";
     // serialize symtab into file
     this->symtab.serialize(outFile);
     // serialize sections into file
-    outFile << "__SECTIONS__";
     for (auto &section : this->sections) {
         section.serialize(outFile);
     }
@@ -52,7 +49,7 @@ void Assembler::printTokenList() {
     for (auto token : tokenList) {
         if (token->getType() == TokenType::LABEL) {
             LabelToken *labelToken = (LabelToken*)token;
-            cout << "Label: " << labelToken->getName()<< endl;
+            cout << "Label: " << labelToken->getLabelName()<< endl;
         } else if (token->getType() == TokenType::DIRECTIVE) {
             cout << "Directive: " << ((DirectiveToken*)token)->getName() << endl;
         } else if (token->getType() == TokenType::COMMAND) {
@@ -78,7 +75,7 @@ void Assembler::firstPass() {
     }
 
     for(uint32_t i = 0; i < symtab.symbols.size(); i++){
-        symtab.symbols[i].section_index = i;
+        symtab.symbols[i].index = i;
     }
 }
 
@@ -92,7 +89,7 @@ void Assembler::processLabelTokenFirstPass(LabelToken* labelToken) {
     }
     if (symbolIndex == 0) {
         // Add a new symbol if not found
-        Symbol symbol = Symbol(sections[currentSectionIndex].getCurrentPosition(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, labelToken->getName(), currentSectionIndex);
+        Symbol symbol = Symbol(sections[currentSectionIndex].getCurrentPosition(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, labelToken->getLabelName(), currentSectionIndex);
         symtab.addSymbol(symbol);
     } else {
         // Update existing symbol
