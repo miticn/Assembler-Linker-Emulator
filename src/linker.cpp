@@ -158,17 +158,33 @@ void Linker::outputFile(){
         }
 
         for(auto &symbol : base.symtab.symbols){
-            if(symbol.type == Symbol::Type::SECTION){
-                //patch symbols
-                //add to output
-                //
+            if(symbol.type == Symbol::Type::SECTION && symbol.value == 0){
+                linkerOutput.copySectionData(maxAddress, base.sections[symbol.name].data);
+                for(auto &symbol_child : base.symtab.symbols){
+                    if(symbol_child.section_index == symbol.index) {
+                        symbol_child.value += maxAddress;
+                    }
+                }
+                maxAddress += base.sections[symbol.name].getSize();
             }
         }
         
-        
-        
+
+        //resolve relocations
+        for(auto &section : base.sections){
+            for(auto &relocation : section.second.relocationTable){
+                uint32_t value = base.symtab.symbols[relocation.symbolIndex].value;
+                uint32_t index_section = base.symtab.findSymbolIndex(section.first);
+                uint32_t relocation_address = base.symtab.symbols[index_section].value+relocation.offset;
+                value += linkerOutput.get32BitValueAtAddress(relocation_address);
+                linkerOutput.set32BitValueAtAddress(relocation_address, value);
+            }
+        }
+
+
+        linkerOutput.saveFile(options.output_filename);
+
     }
-    
 }
 
 

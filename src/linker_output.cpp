@@ -45,14 +45,16 @@ void LinkerOutput::copySectionData(uint32_t address, vector<uint8_t> &data){
     }
 }
 
-void LinkerOutput::saveFile(const string &filename){
+void LinkerOutput::saveFile(const string &filename) {
     std::ofstream outputFile(filename);
     if (!outputFile.is_open()) {
         std::cerr << "Error: Unable to open file " << filename << " for writing." << std::endl;
         return;
     }
 
-    for (const auto& pair : memory) {
+    auto it = memory.begin();
+    while (it != memory.end()) {
+        auto pair = *it;
         outputFile << std::hex << std::setfill('0') << std::setw(4) << pair.first << ": ";
         for (int i = 0; i < 8; ++i) {
             if (i != 0 && i % 8 == 0)
@@ -60,9 +62,12 @@ void LinkerOutput::saveFile(const string &filename){
             if (memory.find(pair.first + i) != memory.end())
                 outputFile << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(memory.at(pair.first + i)) << " ";
             else
-                outputFile << "   "; // if no value at address, print spaces
+                outputFile << "   ";
         }
         outputFile << std::endl;
+
+        // Move iterator to the next 8th element
+        std::advance(it, 8);
     }
 
     outputFile.close();

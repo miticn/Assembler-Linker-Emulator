@@ -5,7 +5,7 @@
 			"type": "cppbuild",
 			"label": "C/C++: gcc build project (make)",
 			"command": "make",
-			"args": ["linker"],
+			"args": ["all"],
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
