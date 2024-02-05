@@ -13,11 +13,12 @@ public:
 
     
     uint32_t getUintFromInstruction(){
-        return (disp & 0xfff) |
+        uint32_t result =  (disp & 0xfff) |
                 ((uint32_t)(regC & 0xf) << 12) |
                 ((uint32_t)(regB & 0xf) << 16) |
                 ((uint32_t)(regA & 0xf) << 20) |
                 ((uint32_t)(mod & 0xf) << 24) |
                 ((uint32_t)(oc & 0xf) << 28);
+        return (result & 0xff) << 24 | (result & 0xff00) << 8 | (result & 0xff0000) >> 8 | (result & 0xff000000) >> 24;
     }
 };

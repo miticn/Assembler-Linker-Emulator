@@ -9,10 +9,11 @@ void LiteralPool::addSymbol(const string& name, uint32_t value) {
     }
     poolMapSymbol[name] = this->offsetFromStartOfPool+this->poolBase;
     
-    data->push_back(value >> 24);
-    data->push_back(value >> 16);
-    data->push_back(value >> 8);
+
     data->push_back(value);
+    data->push_back(value >> 8);
+    data->push_back(value >> 16);
+    data->push_back(value >> 24);
 
 
     this->offsetFromStartOfPool += 4;
@@ -23,10 +24,11 @@ void LiteralPool::addLiteral(uint32_t value) {
         return;
     }
     poolMapLiteral[value] = this->offsetFromStartOfPool+this->poolBase;
-    data->push_back(value >> 24);
-    data->push_back(value >> 16);
-    data->push_back(value >> 8);
+
     data->push_back(value);
+    data->push_back(value >> 8);
+    data->push_back(value >> 16);
+    data->push_back(value >> 24);
     this->offsetFromStartOfPool += 4;
 }
 

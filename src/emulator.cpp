@@ -33,12 +33,18 @@ void Emulator::executeInstuction(uint32_t instruction){
         status = status&(~0x1);
         pc = handler;
     }
-    uint16_t disp = instruction & 0xfff;
-    uint8_t regC = (instruction >> 12) & 0xf;
-    uint8_t regB = (instruction >> 16) & 0xf;
-    uint8_t regA = (instruction >> 20) & 0xf;
-    uint8_t mod = (instruction >> 24) & 0xf;
-    uint8_t oc = (instruction >> 28) & 0xf;
+    uint32_t instruction_big_endian =
+        ((instruction >> 24) & 0xff) |
+        ((instruction >> 8) & 0xff00) |
+        ((instruction << 8) & 0xff0000) |
+        ((instruction << 24) & 0xff000000);
+
+    uint32_t disp = instruction_big_endian & 0xfff;
+    uint32_t regC = (instruction_big_endian >> 12) & 0xf;
+    uint32_t regB = (instruction_big_endian >> 16) & 0xf;
+    uint32_t regA = (instruction_big_endian >> 20) & 0xf;
+    uint32_t mod = (instruction_big_endian >> 24) & 0xf;
+    uint32_t oc = (instruction_big_endian >> 28) & 0xf;
 
     switch (oc) {
     case 0b0010:

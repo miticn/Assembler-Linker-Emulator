@@ -52,10 +52,10 @@ public:
     }
     void add4Bytes(uint32_t word) {
         overflowSafetyCheck(4);
-        data[current_position++] = (word >> 24);
-        data[current_position++] = (word >> 16); 
-        data[current_position++] = (word >> 8); 
         data[current_position++] = (word);
+        data[current_position++] = (word >> 8); 
+        data[current_position++] = (word >> 16); 
+        data[current_position++] = (word >> 24);
     }
     string getName() const { return name; }
 
