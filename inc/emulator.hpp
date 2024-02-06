@@ -6,6 +6,9 @@
 #include <chrono>
 #include "emulator_memory.hpp"
 
+#define TERM_OUT_ADDRESS 0xFFFFFF00;
+#define TERM_IN_ADDRESS 0xFFFFFF04;
+
 using namespace std;
 
 class Emulator{
@@ -21,9 +24,7 @@ private:
     uint32_t &handler = csr[1];
     uint32_t &cause = csr[2];
     EmulatorMemory memory;
-
-    const static uint32_t term_out_address = 0xFFFFFF00;
-    const static uint32_t term_in_address = 0xFFFFFF04;
+    
     const static uint32_t tim_cfg_address = 0xFFFFFF10;
 
     uint32_t pop();
@@ -38,6 +39,7 @@ private:
     void executeShiftOperation(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, int16_t disp);
     void executeStore(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, int16_t disp);
     void executeLoad(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC, int16_t disp);
+    void executeInterupt(uint32_t cause);
 
     bool timerInteruptEnabled(){return (status & 0b1)==0;}
     bool terminalInteruptEnabled(){return (status & 0b10)==0;}

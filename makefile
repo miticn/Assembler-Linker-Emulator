@@ -6,7 +6,7 @@ assembler: flex
 	gcc -g -o assembler src/assembler.cpp misc/flex.cpp misc/bison.cpp src/literal_pool.cpp -lstdc++
 
 emulator:
-	gcc -g -o emulator src/emulator.cpp src/emulator_memory.cpp -lstdc++
+	gcc -g -o emulator src/emulator.cpp src/emulator_memory.cpp src/terminal.cpp -lstdc++
 
 linker: src/linker.cpp src/linker_output.cpp
 	gcc -g -o linker src/linker.cpp src/linker_output.cpp -lstdc++

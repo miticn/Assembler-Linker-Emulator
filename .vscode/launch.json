@@ -62,7 +62,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/emulator",
-      "args": ["tests/nivo-a/program.hex"],
+      "args": ["tests/nivo-b/program.hex"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],

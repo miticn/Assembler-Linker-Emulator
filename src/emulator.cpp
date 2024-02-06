@@ -1,4 +1,6 @@
 #include "../inc/emulator.hpp"
+#include "../inc/terminal.hpp"
+#define DEBUG false
 
 Emulator::Emulator(){
     status = 0;
@@ -43,45 +45,50 @@ void Emulator::executeInstuction(uint32_t instruction){
         return;
     }
     if(instruction == 0x00000010){/* software interupt */
-        cout << "Software interupt" << endl;
-        push(status);
-        push(pc);
-        cause = 4;
-        status = status&(~0x1);
-        pc = handler;
+        if(DEBUG)
+            cout << "Software interupt" << endl;
+        executeInterupt(4);
     }
 
     switch (oc) {
     case 0b0010:
-        cout << "Function call" << endl;
+        if(DEBUG)
+            cout << "Function call" << endl;
         executeFunctionCall(mod, regA, regB, regC, disp);
         break;
     case 0b0011:
-        cout << "Jump" << endl;
+        if(DEBUG)
+            cout << "Jump" << endl;
         executeJump(mod, regA, regB, regC, disp);
         break;
     case 0b0100:
-        cout << "Atomic register swap" << endl;
+        if(DEBUG)
+            cout << "Atomic register swap" << endl;
         executeAtomicRegisterSwap(mod, regA, regB, regC, disp);
         break;
     case 0b0101:
-        cout << "Arithmetic operation" << endl;
+        if(DEBUG)
+            cout << "Arithmetic operation" << endl;
         executeArithmeticOperation(mod, regA, regB, regC, disp);
         break;
     case 0b0110:
-        cout << "Logic operation" << endl;
+        if(DEBUG)
+            cout << "Logic operation" << endl;
         executeLogicOperation(mod, regA, regB, regC, disp);
         break;
     case 0b0111:
-        cout << "Shift operation" << endl;
+        if(DEBUG)
+            cout << "Shift operation" << endl;
         executeShiftOperation(mod, regA, regB, regC, disp);
         break;
     case 0b1000:
-        cout << "Store" << endl;
+        if(DEBUG)
+            cout << "Store" << endl;
         executeStore(mod, regA, regB, regC, disp);
         break;
     case 0b1001:
-        cout << "Load" << endl;
+        if(DEBUG)
+            cout << "Load" << endl;
         executeLoad(mod, regA, regB, regC, disp);
         break;
     default:
@@ -97,7 +104,7 @@ string Emulator::formatToHex(uint32_t value) {
 }
 
 ostream& operator<<(ostream &os, Emulator &emulator){
-    os << "--------------------------------------------------------------------------";
+    os << "\n--------------------------------------------------------------------------";
     for(int i = 0; i<Emulator::NUMBER_OF_GENERAL_REGISTERS; i++){
         if (i%4==0) os << "\n";
         else os << "\t";
@@ -107,6 +114,8 @@ ostream& operator<<(ostream &os, Emulator &emulator){
 }
 
  void Emulator::run(){
+    Terminal::em = &(this->memory);
+    Terminal::createThreadAndRun();
     uint32_t current_time_config = 0xff;
     auto duration_ms = chrono::milliseconds(0);
     auto start_time = chrono::steady_clock::now();
@@ -115,6 +124,12 @@ ostream& operator<<(ostream &os, Emulator &emulator){
         uint32_t instruction = this->memory.get32BitValueAtAddress(pc);
         pc +=4;
         this->executeInstuction(instruction);
+        if(this->terminalInteruptEnabled() && Terminal::inputReady){
+            executeInterupt(3);
+
+
+            Terminal::inputReady = false;
+        }
         //Timer stuff
         /*if(this->timerInteruptEnabled()){
             if(current_time_config!=memory.get32BitValueAtAddress(tim_cfg_address) || last_timer_interupt_disabled){
@@ -162,12 +177,10 @@ ostream& operator<<(ostream &os, Emulator &emulator){
         } else {
             last_timer_interupt_disabled = true;
         }
-        //Terminal stuff
-        if(this->terminalInteruptEnabled()){
-
-        }*/
+        */
 
     }
+    Terminal::stopThread();
  }
 
 
@@ -357,6 +370,14 @@ void Emulator::executeLoad(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC
     default:
         break;
     }
+}
+
+void Emulator::executeInterupt(uint32_t cause){
+    push(status);
+    push(pc);
+    this->cause = cause;
+    status = status&(~0x1);
+    pc = handler;
 }
 
 
