@@ -67,7 +67,9 @@ void LinkerOutput::saveFile(const string &filename) {
         outputFile << std::endl;
 
         // Move iterator to the next 8th element
-        std::advance(it, 8);
+        int i = 0;
+        while(i++ < 8 && it != memory.end())
+            std::advance(it, 1);
     }
 
     outputFile.close();
