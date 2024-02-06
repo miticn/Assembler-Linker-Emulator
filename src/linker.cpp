@@ -183,7 +183,7 @@ void Linker::outputFile(){
 
 
         linkerOutput.saveFile(options.output_filename);
-
+        base.symtab.printSymbolTable();
     }
 }
 

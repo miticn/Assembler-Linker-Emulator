@@ -151,9 +151,9 @@ directive_end : END { Assembler::tokenList.push_back(new EndDirectiveToken);}
 
 command : HALT { Assembler::tokenList.push_back(new HaltCommandToken);}
     | INT { Assembler::tokenList.push_back(new IntCommandToken);}
-    | IRET { 
-        Assembler::tokenList.push_back(new RetCommandToken);
+    | IRET {
         Assembler::tokenList.push_back(new PopStatusCommandToken);
+        Assembler::tokenList.push_back(new RetCommandToken);
     }
     | RET { Assembler::tokenList.push_back(new RetCommandToken);}
     | PUSH REGISTER { Assembler::tokenList.push_back(new PushCommandToken($2));}

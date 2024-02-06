@@ -29,4 +29,7 @@ clean:
 	rm -f -r tests/nivo-a/*.o
 	rm -f -r tests/nivo-b/*.o
 	rm -f -r tests/nivo-c/*.o
+	rm -f -r tests/nivo-a/*.hex
+	rm -f -r tests/nivo-b/*.hex
+	rm -f -r tests/nivo-c/*.hex
 	

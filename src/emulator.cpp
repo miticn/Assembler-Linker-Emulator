@@ -116,22 +116,20 @@ ostream& operator<<(ostream &os, Emulator &emulator){
  void Emulator::run(){
     Terminal::em = &(this->memory);
     Terminal::createThreadAndRun();
-    uint32_t current_time_config = 0xff;
-    auto duration_ms = chrono::milliseconds(0);
+    uint32_t current_time_config = 0x0;
+    auto duration_ms = chrono::milliseconds(500);
     auto start_time = chrono::steady_clock::now();
-    bool last_timer_interupt_disabled = true;
+    bool last_timer_interupt_disabled = false;
     while(!this->isHalted()){
         uint32_t instruction = this->memory.get32BitValueAtAddress(pc);
         pc +=4;
         this->executeInstuction(instruction);
         if(this->terminalInteruptEnabled() && Terminal::inputReady){
             executeInterupt(3);
-
-
             Terminal::inputReady = false;
         }
         //Timer stuff
-        /*if(this->timerInteruptEnabled()){
+        if(this->timerInteruptEnabled()){
             if(current_time_config!=memory.get32BitValueAtAddress(tim_cfg_address) || last_timer_interupt_disabled){
                 current_time_config = memory.get32BitValueAtAddress(tim_cfg_address);
                 last_timer_interupt_disabled = false;
@@ -167,17 +165,16 @@ ostream& operator<<(ostream &os, Emulator &emulator){
             }
             if(chrono::steady_clock::now() > start_time + duration_ms) {
                 //timer interupt here
-                push(status);
-                push(pc);
-                cause = 2;
-                //status = status&(~0x1);
-                pc = handler;
+                if(DEBUG)
+                    cout << "Timer interupt" << endl;
+                
+                executeInterupt(2);
+                auto right = start_time + duration_ms;
                 start_time = chrono::steady_clock::now();
             }
         } else {
             last_timer_interupt_disabled = true;
         }
-        */
 
     }
     Terminal::stopThread();
@@ -373,10 +370,12 @@ void Emulator::executeLoad(uint8_t mod, uint8_t regA, uint8_t regB, uint8_t regC
 }
 
 void Emulator::executeInterupt(uint32_t cause){
-    push(status);
     push(pc);
+    push(status);
     this->cause = cause;
     status = status&(~0x1);
+    if(cause == 2)
+        status |= 0b1;
     pc = handler;
 }
 
