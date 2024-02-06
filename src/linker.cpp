@@ -39,9 +39,9 @@ void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base
                     //merge sections
                     uint32_t offset = base1.sections[sym.name].data.size();
                     //everysymbol value that is dependent on the section needs to add the offset
-                    for(auto &sym : base2.symtab.symbols){
-                        if(sym.section_index == sym.index){
-                            sym.value += offset;
+                    for(auto &sym2 : base2.symtab.symbols){
+                        if(sym2.section_index == sym.index){
+                            sym2.value += offset;
                         }
                     }
                     base1.sections[sym.name].data.insert(base1.sections[sym.name].data.end(), base2.sections[sym2.name].data.begin(), base2.sections[sym2.name].data.end());
