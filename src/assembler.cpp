@@ -156,15 +156,15 @@ void Assembler::processGlobalDirectiveTokenFirstPass(GlobalDirectiveToken* globa
 void Assembler::processEquDirectiveTokenFirstPass(EquDirectiveToken* equToken) {
     // Process equ directive tokens encountered during the first pass
     uint32_t symbolIndex = symtab.findSymbolIndex(equToken->getSymbolName());
-    if (symbolIndex==0 && symtab.symbols[symbolIndex].section_index == 0) {
-        symtab.symbols[symbolIndex].section_index = ABS_SYMBOL_INDEX;
-        symtab.symbols[symbolIndex].value = equToken->getValue();
-    } else if (symbolIndex==0 && symtab.symbols[symbolIndex].section_index != 0) {
-        cout << "Error: Symbol " << equToken->getName() << " already defined" << endl;
-        exit(1);
-    } else {
-        Symbol symbol = Symbol(equToken->getValue(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, equToken->getName(), ABS_SYMBOL_INDEX);
+    if (symbolIndex==0) {
+        Symbol symbol = Symbol(equToken->getValue(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, equToken->getSymbolName(), ABS_SYMBOL_INDEX);
         symtab.addSymbol(symbol);
+    } else if (symtab.symbols[symbolIndex].section_index == 0) {
+        symtab.symbols[symbolIndex].value = equToken->getValue();
+        symtab.symbols[symbolIndex].section_index = ABS_SYMBOL_INDEX;
+    } else {
+        cout << "Error: Symbol " << equToken->getSymbolName() << " already defined" << endl;
+        exit(1);
     }
 }
 

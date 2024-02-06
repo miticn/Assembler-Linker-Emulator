@@ -22,7 +22,7 @@ struct Operand{
     string symbol;
 
     bool hasLiteral() const {
-        return literal != 0;
+        return type == LITERAL_VALUE || type == MEMORY_LITERAL || type == MEMORY_REGISTER_OFFSET_LITERAL;
     }
 
     bool hasSymbol() const {

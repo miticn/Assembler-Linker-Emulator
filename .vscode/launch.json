@@ -9,7 +9,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/assembler",
-      "args": ["tests/nivo-a/main.s"],
+      "args": ["tests/nivo-c/isr_timer.s"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],
