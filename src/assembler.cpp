@@ -277,19 +277,14 @@ void Assembler::processCommandTokenSecondPass(Token* token) {
             else if (symbolIndex == 0) {
                 cout << "Error: Symbol " << operand->symbol << " not declared" << endl;
                 exit(1);
-            } else if (symtab.symbols[symbolIndex].section_index == 0) { //is global and not defined
-                if(!sections[currentSectionIndex].literal_pool->isSymbolPresent(operand->symbol)){
-                    sections[currentSectionIndex].literal_pool->addSymbol(operand->symbol, 0);
-                    Relocation relocation = Relocation(sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol), symbolIndex);
-                    sections[currentSectionIndex].relocationTable.push_back(relocation);
-                }
-                disp = sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol) - sections[currentSectionIndex].getCurrentPosition() - 4;
             } else { //is defined
                 if(!sections[currentSectionIndex].literal_pool->isSymbolPresent(operand->symbol)){
-                    sections[currentSectionIndex].literal_pool->addSymbol(operand->symbol, symtab.symbols[symbolIndex].value);
                     if(symtab.symbols[symbolIndex].section_index != ABS_SYMBOL_INDEX){
-                        Relocation relocation = Relocation(sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol), symtab.symbols[symbolIndex].section_index);
+                        sections[currentSectionIndex].literal_pool->addSymbol(operand->symbol, 0);
+                        Relocation relocation = Relocation(sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol), symbolIndex);
                         sections[currentSectionIndex].relocationTable.push_back(relocation);
+                    } else {
+                        sections[currentSectionIndex].literal_pool->addSymbol(operand->symbol, symtab.symbols[symbolIndex].value);
                     }
                 }
                 disp = sections[currentSectionIndex].literal_pool->getSymbolOffset(operand->symbol) - sections[currentSectionIndex].getCurrentPosition() - 4;

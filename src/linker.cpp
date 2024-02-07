@@ -32,7 +32,8 @@ void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base
                 if(sym.type != sym2.type){
                     cerr << "Error: Symbol " << sym.name << " has conflicting types." << endl;
                     exit(1);
-                } else if(sym.type == Symbol::Type::SECTION){
+                }
+                else if(sym.type == Symbol::Type::SECTION){
                     uint32_t oldIndex = sym2.section_index;
                     uint32_t newIndex = sym.section_index;
                     base2.changeIndex(oldIndex, newIndex);
@@ -56,11 +57,7 @@ void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base
                     base2.symtab.symbols.erase(base2.symtab.symbols.begin() + i);
                     i--;
                     break;
-                } else if(!((sym.directive == Symbol::Directive::EXTERND && sym2.directive == Symbol::Directive::GLOBALD
-                || (sym.directive == Symbol::Directive::GLOBALD && sym2.directive == Symbol::Directive::EXTERND)))){
-                    cerr << "Error: Symbol " << sym.name << " has conflicting directives." << endl;
-                    exit(1);
-                }
+                } 
                 
             }
         }
@@ -69,34 +66,33 @@ void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base
     for(uint32_t i = 0; i < base2.symtab.symbols.size(); i++){
         for(auto &sym : base1.symtab.symbols){
             auto &sym2 = base2.symtab.symbols[i];
-            if((sym.name == sym2.name) 
-            && (sym.directive == Symbol::Directive::EXTERND && sym2.directive == Symbol::Directive::GLOBALD
-            || (sym.directive == Symbol::Directive::GLOBALD && sym2.directive == Symbol::Directive::EXTERND))){
-                uint32_t oldIndex = sym2.index;
-                uint32_t newIndex = sym.index;
-                base2.changeIndex(oldIndex, newIndex);
-                base1.changeIndex(oldIndex, newIndex);
-                if(sym.directive == Symbol::Directive::EXTERND){
-                    sym = sym2;
+            if(sym.name == sym2.name) {
+                if ((sym.directive == Symbol::Directive::EXTERND && sym2.directive == Symbol::Directive::GLOBALD
+                || (sym.directive == Symbol::Directive::GLOBALD && sym2.directive == Symbol::Directive::EXTERND))){
+                    uint32_t oldIndex = sym2.index;
+                    uint32_t newIndex = sym.index;
+                    base2.changeIndex(oldIndex, newIndex);
+                    base1.changeIndex(oldIndex, newIndex);
+                    if(sym.directive == Symbol::Directive::EXTERND){
+                        sym = sym2;
+                    }
+                    //remove symbol from base2
+                    base2.symtab.symbols.erase(base2.symtab.symbols.begin() + i);
+                    i--;
+                    break;
+                } else {
+                    cerr << "Error: Symbol " << sym.name << " has conflicting directives." << endl;
+                    exit(1);
                 }
-                //remove symbol from base2
-                base2.symtab.symbols.erase(base2.symtab.symbols.begin() + i);
-                i--;
-                break;
             }
+            
         }
     }
 
 
-    cout << "Merged base1:" << endl;
-    base1.symtab.printSymbolTable();
     //merge the rest of the symbols
-    for(auto &sym : base2.symtab.symbols){
-        base1.symtab.symbols.push_back(sym);
-    }
+    base1.symtab.symbols.insert(base1.symtab.symbols.end(), base2.symtab.symbols.begin(), base2.symtab.symbols.end());
 
-    cout << "Merged base2:" << endl;
-    base1.symtab.printSymbolTable();
     //merge the rest of the sections
     for(auto &sec : base2.sections){
         base1.sections[sec.first] = sec.second;
@@ -139,7 +135,7 @@ void Linker::outputFile(){
         for(PlaceOption placeOption: options.place_options){
             uint32_t section_index = 0;
             for(auto &symbol : base.symtab.symbols){
-                if(symbol.name == placeOption.section_name) {
+                if(symbol.name == placeOption.section_name && symbol.type == Symbol::Type::SECTION) {
                     section_index = symbol.index;
                 }
             }
