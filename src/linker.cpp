@@ -18,9 +18,10 @@ Linker::Linker(vector<string> input_files, LinkerOptions options){
 void Linker::mergeSecoundBaseObjectIntoFirst(BaseObject &base1, BaseObject &base2){
     base2.symtab.symbols.erase(base2.symtab.symbols.begin());
     uint32_t offsetIndex = base1.symtab.symbols.size();
-    for(auto &sym : base2.symtab.symbols){
-        base2.changeIndex(sym.index, sym.index + offsetIndex);
+    for (auto sym = base2.symtab.symbols.rbegin(); sym != base2.symtab.symbols.rend(); ++sym) {
+        base2.changeIndex(sym->index, sym->index + offsetIndex);
     }
+
 
     //find overlapping sections
     for(uint32_t i = 0; i < base2.symtab.symbols.size(); i++){

@@ -9,5 +9,5 @@ ${ASSEMBLER} -o isr_timer.o isr_timer.s
 ${LINKER} -hex \
   -place=code@0x40000000 \
   -o program.hex \
-  isr_timer.o isr_terminal.o main.o handler.o  
+  handler.o test.o main.o       
 ${EMULATOR} program.hex

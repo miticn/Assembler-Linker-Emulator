@@ -75,9 +75,6 @@ struct BaseObject{
 
         base.symtab.serialize(outFile);
 
-        uint32_t num_sections = base.sections.size();
-        outFile << num_sections << endl;
-
         for (const auto& section_pair : base.sections) {
             const Section& section = section_pair.second;
             section.serialize(outFile);
