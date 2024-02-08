@@ -390,6 +390,7 @@ int main(int argc, char* argv[]) {
 
     Emulator myEmulator;
     myEmulator.loadHex(inputFileName);
+    cout << "----------------------------------EMULATOR--------------------------------" << endl;
     myEmulator.run();
     std::cout << myEmulator << std::endl;
 

@@ -81,8 +81,9 @@
 %token <intValue> REGISTER
 %token <intValue> CONTROL_REGISTER
 
-%left MINUS
-%left PLUS
+%left PLUS MINUS
+%right UMINUS
+%right '^'
 %%
 
 program : program line

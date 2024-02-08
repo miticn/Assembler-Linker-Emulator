@@ -72,10 +72,10 @@ public:
     bool isValid(){
         bool first = true;
         for(uint32_t i = 0; i < sections.size()-1; i++){
-            if(sections[i] != 0 && !first){
+            if(sections[i] != 0 && (sections[i] != 1 || !first)){
                 return false;
             }
-            if(sections[i] != 0){
+            if(sections[i] == 1){
                 first = false;
             }
         }
