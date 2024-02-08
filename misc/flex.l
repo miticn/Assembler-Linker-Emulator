@@ -38,6 +38,7 @@ CONTROL_REGISTER %cr[0-2]|%status|%handler|%cause
 "." {return DOT;}
 "," {return COMMA;}
 "+" {return PLUS;}
+"-" {return MINUS;}
 "[" {return LBRACKET;}
 "]" {return RBRACKET;}
 "(" {return LPAREN;}

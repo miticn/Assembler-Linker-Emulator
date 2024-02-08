@@ -20,7 +20,7 @@ private:
     Symbol_table symtab;
     vector<Section> sections;
     uint32_t currentSectionIndex = 0;
-    //unordered_set<string> relocatableSymbols;
+    vector<TNSEntry> tns;
 
 
     void processLabelTokenFirstPass(LabelToken* labelToken);
@@ -33,7 +33,7 @@ private:
     void updateSymbolForDirective(uint32_t symbolIndex);
     void updateCurrentSectionPosition(Token* token);
 
-
+    void equDirectiveSolveTNS();
 
     void makeLiteralPools();
     void resetSectionPositions();
@@ -47,12 +47,12 @@ private:
     void processCommandTokenSecondPass(Token* token);
     void processDataBackpatchingSecondPass(Token* token);
 
-
 public:
     Assembler(){
         sections.push_back(Section("UND"));
     }
     static list<Token*> tokenList;
+    static ExpressionPostfix expression;
     void assemble(char *inputFileName, char *outputFileName);
     void firstPass();
     void secondPass();

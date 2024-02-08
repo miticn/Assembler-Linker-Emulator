@@ -1,5 +1,6 @@
 #pragma once
 #include "token.hpp"
+#include "tns.hpp"
 
 struct DirectiveToken : public Token{
     virtual uint32_t getSize() override {
@@ -70,9 +71,11 @@ struct AsciiDirectiveToken : public DirectiveToken{
 struct EquDirectiveToken : public DirectiveToken{
     string symbolName;
     uint32_t value;
+    ExpressionPostfix expression;
     string getName(){ return "equ"; }
     string getSymbolName(){ return symbolName; }
     uint32_t getValue(){ return value; }
+    EquDirectiveToken(const string &symbolName, ExpressionPostfix expression): symbolName(symbolName), expression(expression) {}
     EquDirectiveToken(const string &symbolName, uint32_t value): symbolName(symbolName), value(value) {}
 };
 

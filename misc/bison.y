@@ -22,7 +22,7 @@
 %defines "misc/bison.hpp"
 
 %union {
-    uint intValue;
+    int intValue;
     char* stringValue;
     // ... other types ...
 }
@@ -37,6 +37,7 @@
 %token DOT
 %token COMMA
 %token PLUS
+%token MINUS
 %token LBRACKET
 %token RBRACKET
 %token LPAREN
@@ -80,6 +81,8 @@
 %token <intValue> REGISTER
 %token <intValue> CONTROL_REGISTER
 
+%left MINUS
+%left PLUS
 %%
 
 program : program line
@@ -132,15 +135,16 @@ directive_skip : SKIP NUMBER { Assembler::tokenList.push_back(new SkipDirectiveT
 directive_ascii : ASCII STRING { Assembler::tokenList.push_back(new AsciiDirectiveToken(string($2)));}
     ;
 
-directive_equ : EQU IDENTIFIER COMMA NUMBER { Assembler::tokenList.push_back(new EquDirectiveToken(string($2), $4));}{/*
-    | EQU IDENTIFIER COMMA expression;
-expression: 
-    | expression PLUS expression
-    | expression MINUS expression
+directive_equ : EQU IDENTIFIER COMMA expression {
+    Assembler::tokenList.push_back(new EquDirectiveToken(string($2), Assembler::expression));
+    Assembler::expression = ExpressionPostfix();
+}
+    ;
+expression:  expression PLUS expression {Assembler::expression.addElement(Element('+'));}
+    | expression MINUS expression {Assembler::expression.addElement(Element('-'));}
     | LPAREN expression RPAREN
-    | NUMBER
-    | IDENTIFIER //pushing will create postfix notation
-*/}
+    | NUMBER {Assembler::expression.addElement(Element($1));}
+    | IDENTIFIER {Assembler::expression.addElement(Element(string($1)));}
     ;
 
 

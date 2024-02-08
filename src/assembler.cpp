@@ -14,6 +14,7 @@ using namespace std;
 using namespace std;
 
 list<Token*> Assembler::tokenList;
+ExpressionPostfix Assembler::expression = ExpressionPostfix();
 
 void Assembler::assemble(char *inputFileName, char *outputFileName) {
     printf("Assembling %s into %s...\n", inputFileName, outputFileName);
@@ -66,6 +67,7 @@ void Assembler::firstPass() {
     for (auto token : tokenList) {
         if (token->getType() == TokenType::LABEL) {
             processLabelTokenFirstPass((LabelToken*)token);
+
         } else if (token->getType() == TokenType::DIRECTIVE) {
             processDirectiveTokenFirstPass((DirectiveToken*)token);
         }
@@ -76,6 +78,11 @@ void Assembler::firstPass() {
 
     for(uint32_t i = 0; i < symtab.symbols.size(); i++){
         symtab.symbols[i].index = i;
+    }
+
+    if(tns.size() > 0){
+        cout << "Error: There are still undefined equ directives after first pass" << endl;
+        exit(1);
     }
 }
 
@@ -96,7 +103,7 @@ void Assembler::processLabelTokenFirstPass(LabelToken* labelToken) {
         symtab.symbols[symbolIndex].section_index = currentSectionIndex;
         symtab.symbols[symbolIndex].value = sections[currentSectionIndex].getCurrentPosition();
     }
-    //relocatableSymbols.insert(labelToken->getLabelName());
+    equDirectiveSolveTNS();
 }
 
 void Assembler::processDirectiveTokenFirstPass(DirectiveToken* directiveToken) {
@@ -112,6 +119,7 @@ void Assembler::processDirectiveTokenFirstPass(DirectiveToken* directiveToken) {
     } else if (directiveToken->getName() == "end") {
         return;
     }
+    equDirectiveSolveTNS();
 }
 
 void Assembler::processSectionDirectiveTokenFirstPass(SectionDirectiveToken* sectionToken) {
@@ -128,9 +136,6 @@ void Assembler::processExternDirectiveTokenFirstPass(ExternDirectiveToken* exter
         Symbol symbol = Symbol(0, Symbol::Type::NOTYPE, Symbol::Bind::GLOBAL, externToken->getSymbolName(), 0);
         symbol.directive = Symbol::Directive::EXTERND;
         symtab.addSymbol(symbol);
-    } else if (symtab.symbols[symbolIndex].directive == Symbol::Directive::NONED){
-        symtab.symbols[symbolIndex].bind = Symbol::Bind::GLOBAL;
-        symtab.symbols[symbolIndex].directive = Symbol::Directive::EXTERND;
     } else{
         cout << "Error: Symbol " << externToken->getSymbolName() << " already defined" << endl;
         exit(1);
@@ -153,19 +158,35 @@ void Assembler::processGlobalDirectiveTokenFirstPass(GlobalDirectiveToken* globa
     }
 }
 
+void Assembler::equDirectiveSolveTNS(){
+    uint32_t last_symtab_size;
+    do{
+        last_symtab_size = symtab.symbols.size();
+        for(uint32_t i = 0; i < tns.size(); i++){
+            if(tns[i].expr.areAllSymbolsKnown(symtab)){
+                Symbol s = tns[i].expr.generateSymbol(tns[i].symbol_name, symtab);
+                uint32_t symbolIndex = symtab.findSymbolIndex(tns[i].symbol_name);
+                if (symbolIndex == 0) {
+                    symtab.addSymbol(s);
+                } else if (symtab.symbols[symbolIndex].section_index == 0) {
+                    symtab.symbols[symbolIndex].section_index = s.section_index;
+                    symtab.symbols[symbolIndex].value = s.value;
+                } else {
+                    cout << "Error: Symbol " << tns[i].symbol_name << " already defined" << endl;
+                    exit(1);
+                }
+                tns.erase(tns.begin() + i);
+                i--;
+            }
+        }
+    }while(last_symtab_size != symtab.symbols.size());
+}
+
 void Assembler::processEquDirectiveTokenFirstPass(EquDirectiveToken* equToken) {
     // Process equ directive tokens encountered during the first pass
-    uint32_t symbolIndex = symtab.findSymbolIndex(equToken->getSymbolName());
-    if (symbolIndex==0) {
-        Symbol symbol = Symbol(equToken->getValue(), Symbol::Type::NOTYPE, Symbol::Bind::LOCAL, equToken->getSymbolName(), ABS_SYMBOL_INDEX);
-        symtab.addSymbol(symbol);
-    } else if (symtab.symbols[symbolIndex].section_index == 0) {
-        symtab.symbols[symbolIndex].value = equToken->getValue();
-        symtab.symbols[symbolIndex].section_index = ABS_SYMBOL_INDEX;
-    } else {
-        cout << "Error: Symbol " << equToken->getSymbolName() << " already defined" << endl;
-        exit(1);
-    }
+    tns.push_back(TNSEntry(equToken->getSymbolName(),equToken->expression));
+
+    equDirectiveSolveTNS();
 }
 
 void Assembler::updateCurrentSectionPosition(Token* token) {
